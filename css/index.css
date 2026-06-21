@@ -9788,6 +9788,94 @@ body {
   }
 }
 
+/* Academic home hard reset: keep the homepage clean and prevent theme backgrounds/icons from leaking in. */
+body:has(.academic-home) {
+  background: #f8fafc !important;
+}
+
+body:has(.academic-home) #web_bg {
+  display: none !important;
+  background: none !important;
+}
+
+body:has(.academic-home) #body-wrap,
+body:has(.academic-home) #content-inner {
+  background: #f8fafc !important;
+}
+
+body:has(.academic-home) #page-header::before,
+body:has(.academic-home) #footer::before {
+  display: none !important;
+}
+
+#body-wrap.home #page-header,
+#body-wrap.home #page-header.full_page,
+#body-wrap.home #page-header.not-top-img {
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+#body-wrap.home #page-header #site-info,
+#body-wrap.home #page-header #site_social_icons,
+#body-wrap.home #page-header #scroll-down,
+#body-wrap.home #page-header .main-hero-waves-area,
+#body-wrap.home #page-header .waves-area {
+  display: none !important;
+}
+
+#body-wrap.home #page-header #nav {
+  position: relative !important;
+  top: 0 !important;
+  height: 76px !important;
+  line-height: 1 !important;
+}
+
+#body-wrap.home #content-inner.layout:has(.academic-home) {
+  margin-top: 0 !important;
+  padding-top: 64px !important;
+}
+
+.academic-home,
+.academic-profile-card,
+.academic-main,
+.academic-interest-card,
+.academic-feature-card {
+  box-sizing: border-box !important;
+}
+
+.academic-avatar-wrap {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+.academic-social-link {
+  flex: 0 0 34px !important;
+  width: 34px !important;
+  max-width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  max-height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.academic-social-link svg {
+  flex: 0 0 22px !important;
+  width: 22px !important;
+  max-width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  max-height: 22px !important;
+  min-height: 22px !important;
+  display: block !important;
+  transform: none !important;
+}
 .search-dialog {
   position: fixed;
   top: 10%;
