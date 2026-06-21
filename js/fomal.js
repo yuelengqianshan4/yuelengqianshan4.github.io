@@ -682,7 +682,7 @@ if (document.body.clientWidth > 992) {
         zoom: 0.9,
         borderRadius: 5 + 'px',
         right: 55.6 + 'px',
-        nekoImg: "https://bu.dusays.com/2022/07/20/62d812db74be9.png",
+        nekoImg: "/assets/avatar.webp",
         hoverMsg: "春天啦~",
         color: "var(--theme-color)",
         during: 500,
@@ -777,8 +777,8 @@ if (document.body.clientWidth > 992) {
     /*
     $("#myscoll").nekoScroll({
         nekoname:'neko1', //nekoname，相当于id
-        nekoImg:'img/猫咪.png', //neko的背景图片
-        scImg:"img/绳1.png", //绳子的背景图片
+        nekoImg:'/assets/avatar.webp', //neko的背景图片
+        scImg:"/assets/r2.jpg", //绳子的背景图片
         bgcolor:'#1e90ff', //背景颜色，没有绳子背景图片时有效
         zoom:0.9, //绳子长度的缩放值
         hoverMsg:'你好~喵', //鼠标浮动到neko上方的对话框信息
@@ -1171,7 +1171,7 @@ function createtime2() {
       "color:white; background-color:#10bcc0",
       "",
       "",
-      'background:url("https://unpkg.zhimg.com/anzhiyu-assets@latest/image/common/tinggge.gif") no-repeat;font-size:450%'
+    'background:url("/assets/avatar.webp") no-repeat;font-size:450%'
     )
   );
 
@@ -2770,7 +2770,7 @@ class Cursor {
 //   // 元宝飘落
 //   jQuery(document).ready(function ($) {
 //     $('#newYear').wpSuperSnow({
-//       flakes: ['https://tuchuang.voooe.cn/images/2023/01/02/yb1.webp', 'https://tuchuang.voooe.cn/images/2023/01/02/yb2.webp', 'https://tuchuang.voooe.cn/images/2023/01/02/yb3.webp'],
+//       flakes: ['/assets/r1.jpg', '/assets/r2.jpg', '/assets/cat-theme/soft-background.jpg'],
 //       totalFlakes: '100',
 //       zIndex: '999999',
 //       maxSize: '30',
@@ -3151,26 +3151,22 @@ function changeBgColor() {
   changeBg(document.querySelector("#define_colors").value);
 }
 
-// 必应每日壁纸API
-let bingDayBg = screen.width <= 768 ? "url(https://bing.img.run/m.php)" : "url(https://bing.img.run/1920x1080.php)";
-// 必应历史壁纸API
-let bingHistoryBg = screen.width <= 768 ? "url(https://bing.img.run/rand_m.php)" : "url(https://bing.img.run/rand.php)";
-// EEE.DOG
-let EEEDog = "url(https://api.yimian.xyz/img?type=moe&size=1920x1080)";
-// 随机美图cdn.seovx.com
-let seovx = "url(https://cdn.seovx.com/?mom=302)";
-// picsum随机
-let picsum = "url(https://picsum.photos/1920/1080.webp)";
+// 本地猫猫主题背景
+let bingDayBg = "url(/assets/head.jpg)";
+let bingHistoryBg = "url(/assets/r1.jpg)";
+let EEEDog = "url(/assets/r2.jpg)";
+let seovx = "url(/assets/404_1.jpg)";
+let picsum = "url(/assets/cat-theme/soft-background.jpg)";
 // 小歪二次元
 // let waiDongman = "url(https://api.ixiaowai.cn/api/api.php)";
-//  小歪高清壁纸
-let waiBizhi = "url(https://api.ixiaowai.cn/gqapi/gqapi.php)";
+//  本地封面背景
+let waiBizhi = "url(/assets/cat-theme/cover-wide.jpg)";
 // 博天随机
-let btstu = "url(http://api.btstu.cn/sjbz/?lx=suiji)";
+let btstu = "url(/assets/cat-theme/avatar.webp)";
 // tuapi 动漫
 // let tuapi = "url(https://tuapi.eees.cc/api.php?category=dongman)";
-// unsplash随机 https://source.unsplash.com/random/1920x1080/daily (weekly)
-let unsplash = "url(https://source.unsplash.com/random/1920x1080/)";
+// 本地 404 背景
+let unsplash = "url(/assets/cat-theme/not-found-wide.jpg)";
 
 
 // 更换背景(自己的代码)
@@ -3411,7 +3407,7 @@ function createWinbox() {
 <h3>1. 二次元</h3>
 <details class="folding-tag" cyan><summary> 查看二次元背景 </summary>
               <div class='content'>
-              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(https://lskypro.acozycotage.net/Fomalhaut/img/home_bg.webp)" class="imgbox" onclick="changeBg('url(https://lskypro.acozycotage.net/Fomalhaut/img/home_bg.webp)')"></a></div>
+              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(/assets/r1.jpg)" class="imgbox" onclick="changeBg('url(/assets/r1.jpg)')"></a></div>
               </div>
             </details>
 
@@ -3420,7 +3416,7 @@ function createWinbox() {
 
 <details class="folding-tag" cyan><summary> 查看风景背景 </summary>
               <div class='content'>
-              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(https://lskypro.acozycotage.net/Fomalhaut/img/fj1.webp)" class="imgbox" onclick="changeBg('url(https://lskypro.acozycotage.net/Fomalhaut/img/fj1.webp)')"></a></div>
+              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(/assets/head.jpg)" class="imgbox" onclick="changeBg('url(/assets/head.jpg)')"></a></div>
               </div>
             </details>
 
@@ -3428,7 +3424,7 @@ function createWinbox() {
 
 <details class="folding-tag" cyan><summary> 查看萌宠背景 </summary>
               <div class='content'>
-              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(https://lskypro.acozycotage.net/Fomalhaut/img/mc1.webp)" class="imgbox" onclick="changeBg('url(https://lskypro.acozycotage.net/Fomalhaut/img/mc1.webp)')"></a></div>
+              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(/assets/cat-theme/cover-wide.jpg)" class="imgbox" onclick="changeBg('url(/assets/cat-theme/cover-wide.jpg)')"></a></div>
               </div>
             </details>
 
@@ -3452,7 +3448,7 @@ function createWinbox() {
 <h3>6. 适配手机</h3>
 <details class="folding-tag" cyan><summary> 查看适配手机的背景 </summary>
               <div class='content'>
-              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(https://lskypro.acozycotage.net/Fomalhaut/img/mb4.webp)" class="pimgbox" onclick="changeBg('url(https://lskypro.acozycotage.net/Fomalhaut/img/mb4.webp)')"></a></div>
+              <div class="bgbox"><a href="javascript:;" rel="noopener external nofollow" style="background-image:url(/assets/cat-theme/soft-background.jpg)" class="pimgbox" onclick="changeBg('url(/assets/cat-theme/soft-background.jpg)')"></a></div>
               </div>
             </details>
 
@@ -3468,7 +3464,7 @@ function createWinbox() {
 <h3>8. 自定义背景</h3>
 <details class="folding-tag" cyan><summary> 设置自定义背景 </summary>
               <div class='content'>
-              <p><center><input type="text" id="pic-link" size="70%" maxlength="1000" placeholder="请输入有效的图片链接，如 https://source.fomal.cc/img/home_bg.webp"></center></p><p><center><button type="button" onclick="getPicture()" style="background:var(--theme-color);width:35%;padding: 5px 0px 7px 0px;border-radius:30px;color:white;line-height:2;">🌈切换背景🌈</button></center></p>
+              <p><center><input type="text" id="pic-link" size="70%" maxlength="1000" placeholder="请输入有效的图片链接，如 /assets/head.jpg"></center></p><p><center><button type="button" onclick="getPicture()" style="background:var(--theme-color);width:35%;padding: 5px 0px 7px 0px;border-radius:30px;color:white;line-height:2;">🌈切换背景🌈</button></center></p>
               </div>
             </details>
 
