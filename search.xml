@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search> 
+  
+  
+    
+    <entry>
+      <title>LunarSerenity 建站记录</title>
+      <link href="/posts/ee940876.html"/>
+      <url>/posts/ee940876.html</url>
+      
+        <content type="html"><![CDATA[<p>这是 LunarSerenity 的第一篇博客文章。</p><p>这个站点基于 Hexo 和 Butterfly 主题二次开发版本搭建。接下来我会在这里记录学习笔记、项目实践、部署经验和日常思考。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 建站记录 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Hexo </tag>
+            
+            <tag> 博客 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+  
+  
+</search>

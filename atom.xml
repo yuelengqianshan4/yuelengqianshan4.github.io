@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>LunarSerenity</title>
+  
+  
+  <link href="https://yuelengqianshan4.github.io/atom.xml" rel="self"/>
+  
+  <link href="https://yuelengqianshan4.github.io/"/>
+  <updated>2026-06-20T16:00:00.000Z</updated>
+  <id>https://yuelengqianshan4.github.io/</id>
+  
+  <author>
+    <name>yuelengqianshan</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>LunarSerenity 建站记录</title>
+    <link href="https://yuelengqianshan4.github.io/posts/ee940876.html"/>
+    <id>https://yuelengqianshan4.github.io/posts/ee940876.html</id>
+    <published>2026-06-20T16:00:00.000Z</published>
+    <updated>2026-06-20T16:00:00.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>这是 LunarSerenity 的第一篇博客文章。</p><p>这个站点基于 Hexo 和 Butterfly 主题二次开发版本搭建。接下来我会在这里记录学习笔记、项目实践、部署经验和日常思考。</p>]]></content>
+    
+    
+    <summary type="html">记录 LunarSerenity 这个 Hexo + Butterfly 博客的初始化过程。</summary>
+    
+    
+    
+    <category term="建站记录" scheme="https://yuelengqianshan4.github.io/categories/%E5%BB%BA%E7%AB%99%E8%AE%B0%E5%BD%95/"/>
+    
+    
+    <category term="Hexo" scheme="https://yuelengqianshan4.github.io/tags/Hexo/"/>
+    
+    <category term="博客" scheme="https://yuelengqianshan4.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
+    
+  </entry>
+  
+</feed>
