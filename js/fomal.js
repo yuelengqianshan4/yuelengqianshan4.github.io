@@ -40,33 +40,51 @@ document.addEventListener('pjax:complete', tonav);
 document.addEventListener('DOMContentLoaded', tonav);
 //响应pjax
 function tonav() {
-  document.getElementById("name-container").setAttribute("style", "display:none");
+  const nameContainer = document.getElementById("name-container");
+  const pageName = document.getElementById("page-name");
+  const menuLists = document.getElementsByClassName("menus_items");
+
+  if (document.querySelector(".academic-home")) {
+    if (nameContainer) nameContainer.setAttribute("style", "display:none");
+    if (menuLists.length > 1) menuLists[1].setAttribute("style", "");
+    return;
+  }
+
+  if (!nameContainer || !pageName || menuLists.length < 2 || typeof $ === "undefined") return;
+
+  nameContainer.setAttribute("style", "display:none");
   var position = $(window).scrollTop();
-  $(window).scroll(function () {
+  $(window).off("scroll.lunarTonav").on("scroll.lunarTonav", function () {
     var scroll = $(window).scrollTop();
     if (scroll > position) {
-      document.getElementById("name-container").setAttribute("style", "");
-      document.getElementsByClassName("menus_items")[1].setAttribute("style", "display:none!important");
+      nameContainer.setAttribute("style", "");
+      menuLists[1].setAttribute("style", "display:none!important");
     } else {
-      document.getElementsByClassName("menus_items")[1].setAttribute("style", "");
-      document.getElementById("name-container").setAttribute("style", "display:none");
+      menuLists[1].setAttribute("style", "");
+      nameContainer.setAttribute("style", "display:none");
     }
     position = scroll;
   });
-  //修复没有弄右键菜单的童鞋无法回顶部的问题
-  document.getElementById("page-name").innerText = document.title.split(" | LunarSerenity")[0];
+  pageName.innerText = document.title.split(" | LunarSerenity")[0];
 }
 
 function scrollToTop() {
-  document.getElementsByClassName("menus_items")[1].setAttribute("style", "");
-  document.getElementById("name-container").setAttribute("style", "display:none");
-  btf.scrollToDest(0, 500);
+  const menuLists = document.getElementsByClassName("menus_items");
+  const nameContainer = document.getElementById("name-container");
+  if (menuLists.length > 1) menuLists[1].setAttribute("style", "");
+  if (nameContainer) nameContainer.setAttribute("style", "display:none");
+  if (typeof btf !== "undefined" && btf.scrollToDest) btf.scrollToDest(0, 500);
+  else window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /* 导航栏显示标题 end */
 
 //----------------------------------------------------------------
 
+
+function lunarSwalFire(message) {
+  if (typeof Swal !== "undefined" && Swal.fire) Swal.fire(message);
+}
 /* 欢迎信息 start */
 // 腾讯地图 key 未配置时不发起定位请求，避免浏览器端报错。
 const tencentMapKey = "";
@@ -353,6 +371,7 @@ function debounce(fn, time) {
 // 复制提醒
 document.addEventListener("copy", function () {
   debounce(function () {
+    if (typeof Vue === "undefined") return;
     new Vue({
       data: function () {
         this.$notify({
@@ -374,6 +393,7 @@ document.addEventListener("copy", function () {
 document.onkeydown = function (e) {
   if (123 == e.keyCode || (e.ctrlKey && e.shiftKey && (74 === e.keyCode || 73 === e.keyCode || 67 === e.keyCode)) || (e.ctrlKey && 85 === e.keyCode)) {
     debounce(function () {
+      if (typeof Vue === "undefined") return;
       new Vue({
         data: function () {
           this.$notify({
@@ -415,8 +435,10 @@ if ((navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobi
     }
       ;
     window.requestAnimationFrame = t;
-    const i = document.getElementById("snow"),
-      n = i.getContext("2d"),
+    const i = document.getElementById("snow");
+    if (!i) return;
+
+    const n = i.getContext("2d"),
       o = e.flakeCount;
     let a = -100,
       d = -100,
@@ -515,6 +537,8 @@ function dark() {
     r = "226,225,142",
     d = "226,225,224",
     c = [];
+
+  if (!s) return;
 
   function f() {
     n = window.innerWidth, e = window.innerHeight, i = .216 * n, s.setAttribute("width", n), s.setAttribute("height", e)
@@ -1079,6 +1103,7 @@ function changeMouseMode() {
     mouseMode = "off";
     localStorage.setItem("mouse", "off");
     debounce(function () {
+      if (typeof Vue === "undefined") return;
       new Vue({
         data: function () {
           this.$notify({
@@ -1097,6 +1122,7 @@ function changeMouseMode() {
     mouseMode = "on";
     localStorage.setItem("mouse", "on");
     debounce(function () {
+      if (typeof Vue === "undefined") return;
       new Vue({
         data: function () {
           this.$notify({
@@ -1193,11 +1219,7 @@ function createtime2() {
 }
 createtime2();
 
-// 重写console方法
-console.log = function () { };
-console.error = function () { };
-console.warn = function () { };
-
+// 保留 console 输出，便于定位线上运行时问题。
 /* 控制台输出字符画 end */
 
 //----------------------------------------------------------------
@@ -1231,6 +1253,7 @@ function switchNightMode() {
     document.getElementById('modeicon').setAttribute('xlink:href', '#icon-sun')
     // 延时弹窗提醒
     setTimeout(() => {
+      if (typeof Vue === "undefined") return;
       new Vue({
         data: function () {
           this.$notify({
@@ -1258,6 +1281,7 @@ function switchNightMode() {
     saveToLocal.set('theme', 'light', 2)
     document.querySelector('body').classList.add('DarkMode'), document.getElementById('modeicon').setAttribute('xlink:href', '#icon-moon')
     setTimeout(() => {
+      if (typeof Vue === "undefined") return;
       new Vue({
         data: function () {
           this.$notify({
@@ -1292,6 +1316,7 @@ function share_() {
     var title = document.title;
     var subTitle = title.endsWith("| LunarSerenity") ? title.substring(0, title.length - 15) : title;
     navigator.clipboard.writeText('LunarSerenity 的站内分享\n标题：' + subTitle + '\n链接：' + url + '\n欢迎来访！🍭🍭🍭');
+    if (typeof Vue === "undefined") return;
     new Vue({
       data: function () {
         this.$notify({
@@ -2432,28 +2457,28 @@ y = d.getFullYear();
 if (m == 9 && dd == 18) {
   document.getElementsByTagName("html")[0].setAttribute("style", "filter: grayscale(60%);");
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("今天是九一八事变" + (y - 1931).toString() + "周年纪念日\n🪔勿忘国耻，振兴中华🪔");
+    lunarSwalFire("今天是九一八事变" + (y - 1931).toString() + "周年纪念日\n🪔勿忘国耻，振兴中华🪔");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 7 && dd == 7) {
   document.getElementsByTagName("html")[0].setAttribute("style", "filter: grayscale(60%);");
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("今天是卢沟桥事变" + (y - 1937).toString() + "周年纪念日\n🪔勿忘国耻，振兴中华🪔");
+    lunarSwalFire("今天是卢沟桥事变" + (y - 1937).toString() + "周年纪念日\n🪔勿忘国耻，振兴中华🪔");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 12 && dd == 13) {
   document.getElementsByTagName("html")[0].setAttribute("style", "filter: grayscale(60%);");
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("今天是南京大屠杀" + (y - 1937).toString() + "周年纪念日\n🪔勿忘国耻，振兴中华🪔");
+    lunarSwalFire("今天是南京大屠杀" + (y - 1937).toString() + "周年纪念日\n🪔勿忘国耻，振兴中华🪔");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 8 && dd == 14) {
   document.getElementsByTagName("html")[0].setAttribute("style", "filter: grayscale(60%);");
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("今天是世界慰安妇纪念日\n🪔勿忘国耻，振兴中华🪔");
+    lunarSwalFire("今天是世界慰安妇纪念日\n🪔勿忘国耻，振兴中华🪔");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
@@ -2462,80 +2487,80 @@ if (m == 8 && dd == 14) {
 // 节假日
 if (m == 10 && dd <= 3) {//国庆节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("祝祖国" + (y - 1949).toString() + "岁生日快乐！");
+    lunarSwalFire("祝祖国" + (y - 1949).toString() + "岁生日快乐！");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 8 && dd == 15) {//搞来玩的，小日子投降
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("小日子已经投降" + (y - 1945).toString() + "年了😃");
+    lunarSwalFire("小日子已经投降" + (y - 1945).toString() + "年了😃");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 1 && dd == 1) {//元旦节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire(y.toString() + "年元旦快乐！🎉");
+    lunarSwalFire(y.toString() + "年元旦快乐！🎉");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 3 && dd == 8) {//妇女节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("各位女神们，妇女节快乐！👩");
+    lunarSwalFire("各位女神们，妇女节快乐！👩");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 l = ["非常抱歉，因为不可控原因，博客将于明天停止运营！", "好消息，日本没了！", "美国垮了，原因竟然是川普！", "微软垮了！", "你的电脑已经过载，建议立即关机！", "你知道吗？站长很喜欢你哦！", "一分钟有61秒哦", "你喜欢的人跟别人跑了！"]
 if (m == 4 && dd == 1) {//愚人节，随机谎话
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire(l[Math.floor(Math.random() * l.length)]);
+    lunarSwalFire(l[Math.floor(Math.random() * l.length)]);
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 5 && dd == 1) {//劳动节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("劳动节快乐\n为各行各业辛勤工作的人们致敬！");
+    lunarSwalFire("劳动节快乐\n为各行各业辛勤工作的人们致敬！");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 5 && dd == 4) {//青年节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("青年节快乐\n青春不是回忆逝去,而是把握现在！");
+    lunarSwalFire("青年节快乐\n青春不是回忆逝去,而是把握现在！");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 5 && dd == 20) {//520
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("今年是520情人节\n快和你喜欢的人一起过吧！💑");
+    lunarSwalFire("今年是520情人节\n快和你喜欢的人一起过吧！💑");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 7 && dd == 1) {//建党节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("祝中国共产党" + (y - 1921).toString() + "岁生日快乐！");
+    lunarSwalFire("祝中国共产党" + (y - 1921).toString() + "岁生日快乐！");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 9 && dd == 10) {//教师节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("各位老师们教师节快乐！👩‍🏫");
+    lunarSwalFire("各位老师们教师节快乐！👩‍🏫");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 12 && dd == 25) {//圣诞节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("圣诞节快乐！🎄");
+    lunarSwalFire("圣诞节快乐！🎄");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 8 && dd == 11) {//站长生日
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("祝站长" + (y - 1998).toString() + "岁生日快乐！🥝");
+    lunarSwalFire("祝站长" + (y - 1998).toString() + "岁生日快乐！🥝");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if (m == 6 && dd == 30) {//小猫咪生日
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("祝小猫咪" + (y - 1999).toString() + "岁生日快乐！🐱");
+    lunarSwalFire("祝小猫咪" + (y - 1999).toString() + "岁生日快乐！🐱");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
@@ -2544,13 +2569,13 @@ if (m == 6 && dd == 30) {//小猫咪生日
 
 if ((y == 2023 && m == 4 && dd == 5) || (y == 2024 && m == 4 && dd == 4) || (y == 2025 && m == 4 && dd == 4)) {//清明节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("清明时节雨纷纷,一束鲜花祭故人💐");
+    lunarSwalFire("清明时节雨纷纷,一束鲜花祭故人💐");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if ((y == 2023 && m == 12 && dd == 22) || (y == 2024 && m == 12 && dd == 21) || (y == 2025 && m == 12 && dd == 21)) {//冬至
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("冬至快乐\n快吃上一碗热热的汤圆和饺子吧🧆");
+    lunarSwalFire("冬至快乐\n快吃上一碗热热的汤圆和饺子吧🧆");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
@@ -2562,42 +2587,42 @@ var lunar = calendarFormatter.solar2lunar();
 if ((lunar["IMonthCn"] == "正月" && lunar["IDayCn"] == "初六") || (lunar["IMonthCn"] == "正月" && lunar["IDayCn"] == "初五") || (lunar["IMonthCn"] == "正月" && lunar["IDayCn"] == "初四") || (lunar["IMonthCn"] == "正月" && lunar["IDayCn"] == "初三") || (lunar["IMonthCn"] == "正月" && lunar["IDayCn"] == "初二") || (lunar["IMonthCn"] == "正月" && lunar["IDayCn"] == "初一") || (lunar["IMonthCn"] == "腊月" && lunar["IDayCn"] == "三十") || (lunar["IMonthCn"] == "腊月" && lunar["IDayCn"] == "廿九")) {
   //春节，本来只有大年三十到初六，但是有时候除夕是大年二十九，所以也加上了
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire(y.toString() + "年新年快乐\n🎊祝你心想事成，诸事顺利🎊");
+    lunarSwalFire(y.toString() + "年新年快乐\n🎊祝你心想事成，诸事顺利🎊");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if ((lunar["IMonthCn"] == "正月" && lunar["IDayCn"] == "十五")) {
   //元宵节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("元宵节快乐\n送你一个大大的灯笼🧅");
+    lunarSwalFire("元宵节快乐\n送你一个大大的灯笼🧅");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if ((lunar["IMonthCn"] == "五月" && lunar["IDayCn"] == "初五")) {
   //端午节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("端午节快乐\n请你吃一条粽子🍙");
+    lunarSwalFire("端午节快乐\n请你吃一条粽子🍙");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if ((lunar["IMonthCn"] == "七月" && lunar["IDayCn"] == "初七")) {
   //七夕节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("七夕节快乐\n黄昏后,柳梢头,牛郎织女来碰头");
+    lunarSwalFire("七夕节快乐\n黄昏后,柳梢头,牛郎织女来碰头");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if ((lunar["IMonthCn"] == "八月" && lunar["IDayCn"] == "十五")) {
   //中秋节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("中秋节快乐\n请你吃一块月饼🍪");
+    lunarSwalFire("中秋节快乐\n请你吃一块月饼🍪");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
 if ((lunar["IMonthCn"] == "九月" && lunar["IDayCn"] == "初九")) {
   //重阳节
   if (sessionStorage.getItem("isPopupWindow") != "1") {
-    Swal.fire("重阳节快乐\n独在异乡为异客，每逢佳节倍思亲");
+    lunarSwalFire("重阳节快乐\n独在异乡为异客，每逢佳节倍思亲");
     sessionStorage.setItem("isPopupWindow", "1");
   }
 }
@@ -2605,7 +2630,7 @@ if ((lunar["IMonthCn"] == "九月" && lunar["IDayCn"] == "初九")) {
 // 切换主题提醒
 // if (y == 2022 && m == 12 && (dd >= 18 && dd <= 20)) {
 //     if (sessionStorage.getItem("isPopupWindow") != "1") {
-//         Swal.fire("网站换成冬日限定主题啦⛄");
+//         lunarSwalFire("网站换成冬日限定主题啦⛄");
 //         sessionStorage.setItem("isPopupWindow", "1");
 //     }
 // }
@@ -2890,6 +2915,7 @@ if (localStorage.getItem("reset_4") == undefined) {
   }
   clearItem();
   setTimeout(function () {
+    if (typeof Vue === "undefined") return;
     new Vue({
       data: function () {
         this.$notify({
@@ -2977,11 +3003,15 @@ if (localStorage.getItem("universe") == undefined) {
 }
 setUniverse2(localStorage.getItem("universe"));
 function setUniverse2(c) {
-  document.getElementById("universe").style.display = c;
+  const universeCanvas = document.getElementById("universe");
+  if (universeCanvas) universeCanvas.style.display = c;
   localStorage.setItem("universe", c);
 }
 function setUniverse() {
-  if (document.getElementById("universeSet").checked) {
+  const universeSet = document.getElementById("universeSet");
+  if (!universeSet) return;
+
+  if (universeSet.checked) {
     setUniverse2("block");
   } else {
     setUniverse2("none");
@@ -2992,13 +3022,18 @@ function setUniverse() {
 if (localStorage.getItem("snow") == undefined) {
   localStorage.setItem("snow", "none");
 }
-document.getElementById("snow").style.display = localStorage.getItem("snow");
+const snowCanvas = document.getElementById("snow");
+if (snowCanvas) snowCanvas.style.display = localStorage.getItem("snow");
 function setSnow() {
-  if (document.getElementById("snowSet").checked) {
-    document.getElementById("snow").style.display = "block";
+  const snowSet = document.getElementById("snowSet");
+  const snowCanvas = document.getElementById("snow");
+  if (!snowSet || !snowCanvas) return;
+
+  if (snowSet.checked) {
+    snowCanvas.style.display = "block";
     localStorage.setItem("snow", "block");
   } else {
-    document.getElementById("snow").style.display = "none";
+    snowCanvas.style.display = "none";
     localStorage.setItem("snow", "none");
   }
 }
@@ -3208,6 +3243,7 @@ function getPicture_() {
     var link = "url(" + document.getElementById("pic-link").value + ")";
     changeBg(link);
     // 提示切换成功
+    if (typeof Vue === "undefined") return;
     new Vue({
       data: function () {
         this.$notify({
@@ -3223,6 +3259,7 @@ function getPicture_() {
     })
   }).catch(() => {
     // 无效的图片链接，提示无效
+    if (typeof Vue === "undefined") return;
     new Vue({
       data: function () {
         this.$notify({
@@ -3314,6 +3351,7 @@ function changeLight(flag) {
 var winbox = "";
 
 function createWinbox() {
+  if (typeof WinBox === "undefined") return;
   let div = document.createElement("div");
   document.body.appendChild(div);
   winbox = WinBox({
@@ -3485,10 +3523,11 @@ function createWinbox() {
   } else {
     document.getElementById("blur").checked = false;
   }
-  if (localStorage.getItem("universe") == "block") {
-    document.getElementById("universeSet").checked = true;
-  } else if (localStorage.getItem("universe") == "none") {
-    document.getElementById("universeSet").checked = false;
+  const universeSet = document.getElementById("universeSet");
+  if (universeSet && localStorage.getItem("universe") == "block") {
+    universeSet.checked = true;
+  } else if (universeSet && localStorage.getItem("universe") == "none") {
+    universeSet.checked = false;
   }
   if (localStorage.getItem("fpson") == "1") {
     document.getElementById("fpson").checked = true;
@@ -3506,10 +3545,11 @@ function createWinbox() {
     document.getElementById("lightSet").checked = false;
   }
   setFontBorder();
-  if (localStorage.getItem("snow") == "block") {
-    document.getElementById("snowSet").checked = true;
-  } else if (localStorage.getItem("snow") == "none") {
-    document.getElementById("snowSet").checked = false;
+  const snowSet = document.getElementById("snowSet");
+  if (snowSet && localStorage.getItem("snow") == "block") {
+    snowSet.checked = true;
+  } else if (snowSet && localStorage.getItem("snow") == "none") {
+    snowSet.checked = false;
   }
 }
 
@@ -3541,7 +3581,8 @@ function winResize() {
 
 // 切换状态，窗口已创建则控制窗口显示和隐藏，没窗口则创建窗口
 function toggleWinbox() {
-  if (document.querySelector("#meihuaBox")) {
+  if (typeof WinBox === "undefined" && !document.querySelector("#meihuaBox")) return;
+  if (document.querySelector("#meihuaBox") && typeof winbox !== "undefined") {
     winbox.toggleClass("hide");
   } else {
     createWinbox();
