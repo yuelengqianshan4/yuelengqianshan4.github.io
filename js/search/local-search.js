@@ -4,12 +4,16 @@ window.addEventListener('load', () => {
   const $searchMask = document.getElementById('search-mask')
 
   const openSearch = () => {
+    const $searchDialog = document.querySelector('#local-search .search-dialog')
+    const $searchInput = document.querySelector('#local-search-input input')
+    if (!$searchMask || !$searchDialog || !$searchInput) return
+
     const bodyStyle = document.body.style
     bodyStyle.width = '100%'
     bodyStyle.overflow = 'hidden'
     btf.animateIn($searchMask, 'to_show 0.5s')
-    btf.animateIn(document.querySelector('#local-search .search-dialog'), 'titleScale 0.5s')
-    setTimeout(() => { document.querySelector('#local-search-input input').focus() }, 100)
+    btf.animateIn($searchDialog, 'titleScale 0.5s')
+    setTimeout(() => { $searchInput.focus() }, 100)
     if (!loadFlag) {
       search()
       loadFlag = true
@@ -27,17 +31,20 @@ window.addEventListener('load', () => {
     const bodyStyle = document.body.style
     bodyStyle.width = ''
     bodyStyle.overflow = ''
-    btf.animateOut(document.querySelector('#local-search .search-dialog'), 'search_close .5s')
-    btf.animateOut($searchMask, 'to_hide 0.5s')
+    const $searchDialog = document.querySelector('#local-search .search-dialog')
+    if ($searchDialog) btf.animateOut($searchDialog, 'search_close .5s')
+    if ($searchMask) btf.animateOut($searchMask, 'to_hide 0.5s')
   }
 
   const searchClickFn = () => {
-    document.querySelector('#search-button > .search').addEventListener('click', openSearch)
+    const $searchButton = document.querySelector('#search-button > .search')
+    if ($searchButton) $searchButton.addEventListener('click', openSearch)
   }
 
   const searchClickFnOnce = () => {
-    document.querySelector('#local-search .search-close-button').addEventListener('click', closeSearch)
-    $searchMask.addEventListener('click', closeSearch)
+    const $closeButton = document.querySelector('#local-search .search-close-button')
+    if ($closeButton) $closeButton.addEventListener('click', closeSearch)
+    if ($searchMask) $searchMask.addEventListener('click', closeSearch)
     if (GLOBAL_CONFIG.localSearch.preload) dataObj = fetchData(GLOBAL_CONFIG.localSearch.path)
   }
 
@@ -66,8 +73,10 @@ window.addEventListener('load', () => {
     }
     if (response.ok) {
       const $loadDataItem = document.getElementById('loading-database')
-      $loadDataItem.nextElementSibling.style.display = 'block'
-      $loadDataItem.remove()
+      if ($loadDataItem && $loadDataItem.nextElementSibling) {
+        $loadDataItem.nextElementSibling.style.display = 'block'
+        $loadDataItem.remove()
+      }
     }
     return data
   }
@@ -80,6 +89,7 @@ window.addEventListener('load', () => {
     const $input = document.querySelector('#local-search-input input')
     const $resultContent = document.getElementById('local-search-results')
     const $loadingStatus = document.getElementById('loading-status')
+    if (!$input || !$resultContent || !$loadingStatus) return
 
     $input.addEventListener('input', function () {
       const keywords = this.value.trim().toLowerCase().split(/[\s]+/)
@@ -182,7 +192,7 @@ window.addEventListener('load', () => {
 
   // pjax
   window.addEventListener('pjax:complete', () => {
-    !btf.isHidden($searchMask) && closeSearch()
+    $searchMask && !btf.isHidden($searchMask) && closeSearch()
     searchClickFn()
   })
 })

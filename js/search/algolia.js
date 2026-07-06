@@ -1,11 +1,16 @@
 window.addEventListener('load', () => {
   const openSearch = () => {
+    const $searchMask = document.getElementById('search-mask')
+    const $searchDialog = document.querySelector('#algolia-search .search-dialog')
+    const $searchInput = document.querySelector('#algolia-search .ais-SearchBox-input')
+    if (!$searchMask || !$searchDialog || !$searchInput) return
+
     const bodyStyle = document.body.style
     bodyStyle.width = '100%'
     bodyStyle.overflow = 'hidden'
-    btf.animateIn(document.getElementById('search-mask'), 'to_show 0.5s')
-    btf.animateIn(document.querySelector('#algolia-search .search-dialog'), 'titleScale 0.5s')
-    setTimeout(() => { document.querySelector('#algolia-search .ais-SearchBox-input').focus() }, 100)
+    btf.animateIn($searchMask, 'to_show 0.5s')
+    btf.animateIn($searchDialog, 'titleScale 0.5s')
+    setTimeout(() => { $searchInput.focus() }, 100)
 
     // shortcut: ESC
     document.addEventListener('keydown', function f (event) {
@@ -20,17 +25,22 @@ window.addEventListener('load', () => {
     const bodyStyle = document.body.style
     bodyStyle.width = ''
     bodyStyle.overflow = ''
-    btf.animateOut(document.querySelector('#algolia-search .search-dialog'), 'search_close .5s')
-    btf.animateOut(document.getElementById('search-mask'), 'to_hide 0.5s')
+    const $searchDialog = document.querySelector('#algolia-search .search-dialog')
+    const $searchMask = document.getElementById('search-mask')
+    if ($searchDialog) btf.animateOut($searchDialog, 'search_close .5s')
+    if ($searchMask) btf.animateOut($searchMask, 'to_hide 0.5s')
   }
 
   const searchClickFn = () => {
-    document.querySelector('#search-button > .search').addEventListener('click', openSearch)
+    const $searchButton = document.querySelector('#search-button > .search')
+    if ($searchButton) $searchButton.addEventListener('click', openSearch)
   }
 
   const searchClickFnOnce = () => {
-    document.getElementById('search-mask').addEventListener('click', closeSearch)
-    document.querySelector('#algolia-search .search-close-button').addEventListener('click', closeSearch)
+    const $searchMask = document.getElementById('search-mask')
+    const $closeButton = document.querySelector('#algolia-search .search-close-button')
+    if ($searchMask) $searchMask.addEventListener('click', closeSearch)
+    if ($closeButton) $closeButton.addEventListener('click', closeSearch)
   }
 
   const cutContent = content => {
@@ -154,11 +164,13 @@ window.addEventListener('load', () => {
   searchClickFnOnce()
 
   window.addEventListener('pjax:complete', () => {
-    getComputedStyle(document.querySelector('#algolia-search .search-dialog')).display === 'block' && closeSearch()
+    const $searchDialog = document.querySelector('#algolia-search .search-dialog')
+    $searchDialog && getComputedStyle($searchDialog).display === 'block' && closeSearch()
     searchClickFn()
   })
 
   window.pjax && search.on('render', () => {
-    window.pjax.refresh(document.getElementById('algolia-hits'))
+    const $algoliaHits = document.getElementById('algolia-hits')
+    $algoliaHits && window.pjax.refresh($algoliaHits)
   })
 })

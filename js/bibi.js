@@ -3,16 +3,26 @@ let total = 0
 let nowNum = 0
 let items = []
 let page = 1
-let Url = 'https://kkapi.fomal.cc/api/ispeak?author=6319fedef46fae97dcfa5ee2&page=' // 记住替换为你的API链接
+let Url = '' // 可选：配置自己的说说 API，留空时显示本地占位内容
 
 
 window.addEventListener('DOMContentLoaded', () => {
+  if (!document.getElementById('bibi')) return
     getNew();
 });
 
 // 获取数据
 function getNew() {
     let bibi = document.getElementById('bibi');
+    let bbMain = document.getElementById('bb-main')
+    let bbInfo = document.querySelector('.bb-info')
+    if (!bibi || !bbMain) return
+    if (!Url) {
+        if (bbInfo) bbInfo.innerHTML = 'LunarSerenity 日常片段'
+        bbMain.innerHTML = '<div class="bb-empty">这里会用来记录简短想法、学习碎片和生活片段。等配置好自己的说说数据源后，会自动展示动态内容。</div>'
+        return
+    }
+
     try {
         bibi.removeChild(document.getElementById('more'))
     } catch (error) { }
@@ -24,7 +34,7 @@ function getNew() {
         items = res.data.items
         nowNum += items.length
         if (page == 1) {
-            document.querySelector('.bb-info').innerHTML = '<svg style="width:1.20em;height:1.20em;top:5px;fill:currentColor;overflow:hidden;position:relative"><use xlink:href="#icon-chat"></svg> 站长的唠叨(' + total + ')'
+            if (bbInfo) bbInfo.innerHTML = '<svg style="width:1.20em;height:1.20em;top:5px;fill:currentColor;overflow:hidden;position:relative"><use xlink:href="#icon-chat"></svg> LunarSerenity 日常片段(' + total + ')'
         }
         page += 1
     }).then(() => {
@@ -33,12 +43,17 @@ function getNew() {
             document.getElementById('bibi').innerHTML += '<button id="more" onclick="getNew()">再翻翻</button>'
         }
         document.getElementById('bibi').removeChild(document.getElementById('bb_loading'))
+    }).catch(error => {
+        if (bbInfo) bbInfo.innerHTML = 'LunarSerenity 日常片段'
+        bbMain.innerHTML = '<div class="bb-empty">暂时无法加载说说内容，请稍后再试。</div>'
+        console.warn('Bibi content load failed:', error)
     })
 }
 
 // 渲染数据
 function bb() {
     let bb = document.getElementById('bb-main')
+    if (!bb) return
     items.forEach((item) => {
         let time = item.createdAt.substring(0, 10);
         let div = document.createElement('div')
