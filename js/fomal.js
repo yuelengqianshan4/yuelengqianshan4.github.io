@@ -677,158 +677,6 @@ function randomPost() {
 
 //----------------------------------------------------------------
 
-/* 小猫咪 start */
-if (document.body.clientWidth > 992) {
-  function getBasicInfo() {
-    /* 窗口高度 */
-    var ViewH = $(window).height();
-    /* document高度 */
-    var DocH = $("body")[0].scrollHeight;
-    /* 滚动的高度 */
-    var ScrollTop = $(window).scrollTop();
-    /* 可滚动的高度 */
-    var S_V = DocH - ViewH;
-    var Band_H = ScrollTop / (DocH - ViewH) * 100;
-    return {
-      ViewH: ViewH,
-      DocH: DocH,
-      ScrollTop: ScrollTop,
-      Band_H: Band_H,
-      S_V: S_V
-    }
-  };
-  function show(basicInfo) {
-    if (basicInfo.ScrollTop > 0.001) {
-      $(".neko").css('display', 'block');
-    } else {
-      $(".neko").css('display', 'none');
-    }
-  }
-  (function ($) {
-    $.fn.nekoScroll = function (option) {
-      var defaultSetting = {
-        top: '0',
-        scroWidth: 6 + 'px',
-        z_index: 9999,
-        zoom: 0.9,
-        borderRadius: 5 + 'px',
-        right: 55.6 + 'px',
-        nekoImg: "/assets/avatar.webp",
-        hoverMsg: "春天啦~",
-        color: "var(--theme-color)",
-        during: 500,
-        blog_body: "body",
-      };
-      var setting = $.extend(defaultSetting, option);
-      var getThis = this.prop("className") !== "" ? "." + this.prop("className") : this.prop("id") !== "" ? "#" +
-        this.prop("id") : this.prop("nodeName");
-      if ($(".neko").length == 0) {
-        this.after("<div class=\"neko\" id=" + setting.nekoname + " data-msg=\"" + setting.hoverMsg + "\"></div>");
-      }
-      let basicInfo = getBasicInfo();
-      $(getThis)
-        .css({
-          'position': 'fixed',
-          'width': setting.scroWidth,
-          'top': setting.top,
-          'height': basicInfo.Band_H * setting.zoom * basicInfo.ViewH * 0.01 + 'px',
-          'z-index': setting.z_index,
-          'background-color': setting.bgcolor,
-          "border-radius": setting.borderRadius,
-          'right': setting.right,
-          'background-image': 'url(' + setting.scImg + ')',
-          'background-image': '-webkit-linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent)', 'border-radius': '2em',
-          'background-size': 'contain'
-        });
-      $("#" + setting.nekoname)
-        .css({
-          'position': 'fixed',
-          'top': basicInfo.Band_H * setting.zoom * basicInfo.ViewH * 0.01 - 50 + 'px',
-          'z-index': setting.z_index * 10,
-          'right': setting.right,
-          'background-image': 'url(' + setting.nekoImg + ')',
-        });
-      show(getBasicInfo());
-      $(window)
-        .scroll(function () {
-          let basicInfo = getBasicInfo();
-          show(basicInfo);
-          $(getThis)
-            .css({
-              'position': 'fixed',
-              'width': setting.scroWidth,
-              'top': setting.top,
-              'height': basicInfo.Band_H * setting.zoom * basicInfo.ViewH * 0.01 + 'px',
-              'z-index': setting.z_index,
-              'background-color': setting.bgcolor,
-              "border-radius": setting.borderRadius,
-              'right': setting.right,
-              'background-image': 'url(' + setting.scImg + ')',
-              'background-image': '-webkit-linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent)', 'border-radius': '2em',
-              'background-size': 'contain'
-            });
-          $("#" + setting.nekoname)
-            .css({
-              'position': 'fixed',
-              'top': basicInfo.Band_H * setting.zoom * basicInfo.ViewH * 0.01 - 50 + 'px',
-              'z-index': setting.z_index * 10,
-              'right': setting.right,
-              'background-image': 'url(' + setting.nekoImg + ')',
-            });
-          if (basicInfo.ScrollTop == basicInfo.S_V) {
-            $("#" + setting.nekoname)
-              .addClass("showMsg")
-          } else {
-            $("#" + setting.nekoname)
-              .removeClass("showMsg");
-            $("#" + setting.nekoname)
-              .attr("data-msg", setting.hoverMsg);
-          }
-        });
-      this.click(function (e) {
-        btf.scrollToDest(0, 500)
-      });
-      $("#" + setting.nekoname)
-        .click(function () {
-          btf.scrollToDest(0, 500)
-        });
-      return this;
-    }
-  })(jQuery);
-
-  $(document).ready(function () {
-    //部分自定义
-    $("#myscoll").nekoScroll({
-      bgcolor: 'rgb(0 0 0 / .5)', //背景颜色，没有绳子背景图片时有效
-      borderRadius: '2em',
-      zoom: 0.9
-    }
-    );
-    //自定义（去掉以下注释，并注释掉其他的查看效果）
-    /*
-    $("#myscoll").nekoScroll({
-        nekoname:'neko1', //nekoname，相当于id
-        nekoImg:'/assets/avatar.webp', //neko的背景图片
-        scImg:"/assets/cat-theme/soft-background.jpg", //绳子的背景图片
-        bgcolor:'#1e90ff', //背景颜色，没有绳子背景图片时有效
-        zoom:0.9, //绳子长度的缩放值
-        hoverMsg:'你好~喵', //鼠标浮动到neko上方的对话框信息
-        right:'100px', //距离页面右边的距离
-        fontFamily:'楷体', //对话框字体
-        fontSize:'14px', //对话框字体的大小
-        color:'#1e90ff', //对话框字体颜色
-        scroWidth:'8px', //绳子的宽度
-        z_index:100, //不用解释了吧
-        during:1200, //从顶部到底部滑动的时长
-    });
-    */
-  })
-}
-
-/* 小猫咪 end */
-
-//----------------------------------------------------------------
-
 /* 右键菜单 start */
 function setMask() {
   //设置遮罩
@@ -1231,86 +1079,39 @@ createtime2();
 
 //----------------------------------------------------------------
 
-/* 夜间模式切换动画 start */
-function switchNightMode() {
-  document.querySelector('body').insertAdjacentHTML('beforeend', '<div class="Cuteen_DarkSky"><div class="Cuteen_DarkPlanet"><div id="sun"></div><div id="moon"></div></div></div>'),
-    setTimeout(function () {
-      document.querySelector('body').classList.contains('DarkMode') ? (document.querySelector('body').classList.remove('DarkMode'), localStorage.setItem('isDark', '0'), document.getElementById('modeicon').setAttribute('xlink:href', '#icon-moon')) : (document.querySelector('body').classList.add('DarkMode'), localStorage.setItem('isDark', '1'), document.getElementById('modeicon').setAttribute('xlink:href', '#icon-sun')),
-        setTimeout(function () {
-          document.getElementsByClassName('Cuteen_DarkSky')[0].style.transition = 'opacity 3s';
-          document.getElementsByClassName('Cuteen_DarkSky')[0].style.opacity = '0';
-          setTimeout(function () {
-            document.getElementsByClassName('Cuteen_DarkSky')[0].remove();
-          }, 1e3);
-        }, 2e3)
-    })
-  const nowMode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
-  if (nowMode === 'light') {
-    // 先设置太阳月亮透明度
-    document.getElementById("sun").style.opacity = "1";
-    document.getElementById("moon").style.opacity = "0";
-    setTimeout(function () {
-      document.getElementById("sun").style.opacity = "0";
-      document.getElementById("moon").style.opacity = "1";
-    }, 1000);
-
-    activateDarkMode()
-    saveToLocal.set('theme', 'dark', 2)
-    // GLOBAL_CONFIG.Snackbar !== undefined && btf.snackbarShow(GLOBAL_CONFIG.Snackbar.day_to_night)
-    document.getElementById('modeicon').setAttribute('xlink:href', '#icon-sun')
-    // 延时弹窗提醒
-    setTimeout(() => {
-      if (typeof Vue === "undefined") return;
-      new Vue({
-        data: function () {
-          this.$notify({
-            title: "关灯啦🌙",
-            message: "当前已成功切换至夜间模式！",
-            position: 'top-left',
-            offset: 50,
-            showClose: true,
-            type: "success",
-            duration: 5000
-          });
-        }
-      })
-    }, 2000)
-  } else {
-    // 先设置太阳月亮透明度
-    document.getElementById("sun").style.opacity = "0";
-    document.getElementById("moon").style.opacity = "1";
-    setTimeout(function () {
-      document.getElementById("sun").style.opacity = "1";
-      document.getElementById("moon").style.opacity = "0";
-    }, 1000);
-
-    activateLightMode()
-    saveToLocal.set('theme', 'light', 2)
-    document.querySelector('body').classList.add('DarkMode'), document.getElementById('modeicon').setAttribute('xlink:href', '#icon-moon')
-    setTimeout(() => {
-      if (typeof Vue === "undefined") return;
-      new Vue({
-        data: function () {
-          this.$notify({
-            title: "开灯啦🌞",
-            message: "当前已成功切换至白天模式！",
-            position: 'top-left',
-            offset: 50,
-            showClose: true,
-            type: "success",
-            duration: 5000
-          });
-        }
-      })
-    }, 2000)
-  }
-  // handle some cases
-  typeof utterancesTheme === 'function' && utterancesTheme()
-  typeof FB === 'object' && window.loadFBComment()
-  window.DISQUS && document.getElementById('disqus_thread').children.length && setTimeout(() => window.disqusReset(), 200)
+/* Light and dark mode switch */
+function syncModeIcons(mode) {
+  document.querySelectorAll('#modeicon').forEach(icon => {
+    icon.setAttribute('xlink:href', mode === 'dark' ? '#icon-sun' : '#icon-moon')
+  })
 }
 
-/* 夜间模式切换动画 end */
+function switchNightMode() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+  const nextMode = isDark ? 'light' : 'dark'
+  if (nextMode === 'dark') {
+    activateDarkMode()
+    saveToLocal.set('theme', 'dark', 2)
+  } else {
+    activateLightMode()
+    saveToLocal.set('theme', 'light', 2)
+  }
+
+  syncModeIcons(nextMode)
+  typeof utterancesTheme === 'function' && utterancesTheme()
+  typeof changeGiscusTheme === 'function' && changeGiscusTheme()
+  typeof FB === 'object' && window.loadFBComment()
+  typeof runMermaid === 'function' && window.runMermaid()
+  const disqus = document.getElementById('disqus_thread')
+  window.DISQUS && disqus && disqus.children.length && setTimeout(() => window.disqusReset(), 200)
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const currentMode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+  syncModeIcons(currentMode)
+})
+
+/* Light and dark mode switch end */
 
 //----------------------------------------------------------------
 
