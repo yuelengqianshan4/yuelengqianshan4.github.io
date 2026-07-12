@@ -326,83 +326,203 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!($article && (isToc || isAnchor))) return
 
-    let $tocLink, $cardToc, scrollPercent, autoScrollToc, isExpand
+    let $tocLink, $cardToc, scrollPercent, autoScrollToc
+    let list = $article.querySelectorAll('h1,h2,h3,h4,h5,h6')
 
     if (isToc) {
       const $cardTocLayout = document.getElementById('card-toc')
+      if (!$cardTocLayout) return
+
       $cardToc = $cardTocLayout.getElementsByClassName('toc-content')[0]
-      $tocLink = $cardToc.querySelectorAll('.toc-link')
+      const tocMinDepth = Math.min(6, Math.max(1, Number(GLOBAL_CONFIG_SITE.tocMinDepth) || 2))
+      const tocMaxDepth = Math.min(6, Math.max(tocMinDepth, Number(GLOBAL_CONFIG_SITE.tocMaxDepth) || 3))
+      const headingSelector = Array.from({ length: tocMaxDepth - tocMinDepth + 1 }, (_, index) => `h${tocMinDepth + index}`).join(',')
+      list = $article.querySelectorAll(headingSelector)
+      $tocLink = Array.from($cardToc.querySelectorAll('.toc-link'))
       const $tocPercentage = $cardTocLayout.querySelector('.toc-percentage')
-      isExpand = $cardToc.classList.contains('is-expand')
+      const $panelToggle = document.getElementById('toc-panel-toggle')
+      const $panelTrigger = document.getElementById('toc-panel-trigger')
+      const $drawerMask = document.getElementById('toc-drawer-mask')
+      const $mobileTocButton = document.getElementById('mobile-toc-button')
+      const panelStorageKey = 'lunarserenity:toc-panel-collapsed'
+      const headingSet = new Set(list)
+      const usedIds = new Set()
+
+      document.querySelectorAll('[id]').forEach(element => {
+        if (!headingSet.has(element) && element.id) usedIds.add(element.id)
+      })
+
+      const createHeadingId = (heading, index) => {
+        const readableId = heading.textContent
+          .trim()
+          .normalize('NFKC')
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^\p{L}\p{N}_-]/gu, '')
+          .replace(/^-+|-+$/g, '')
+        const fallbackId = `section-${heading.tagName.slice(1)}-${index + 1}`
+        const baseId = heading.id.trim() || readableId || fallbackId
+        let uniqueId = baseId
+        let suffix = 2
+
+        while (usedIds.has(uniqueId)) uniqueId = `${baseId}-${suffix++}`
+        usedIds.add(uniqueId)
+        return uniqueId
+      }
+
+      list.forEach((heading, index) => {
+        heading.id = createHeadingId(heading, index)
+        const link = $tocLink[index]
+        if (!link) return
+        link.setAttribute('href', `#${encodeURIComponent(heading.id)}`)
+        link.setAttribute('title', link.textContent.trim())
+      })
+
+      const updatePanelControls = collapsed => {
+        if ($panelToggle) {
+          $panelToggle.setAttribute('aria-expanded', String(!collapsed))
+          $panelToggle.setAttribute('aria-label', collapsed ? '展开文章目录' : '收起文章目录')
+          $panelToggle.title = collapsed ? '展开文章目录' : '收起文章目录'
+        }
+        if ($panelTrigger) $panelTrigger.setAttribute('aria-expanded', String(!collapsed))
+      }
+
+      const setPanelCollapsed = (collapsed, persist = true) => {
+        document.body.classList.toggle('toc-panel-collapsed', collapsed)
+        updatePanelControls(collapsed)
+        if (!persist) return
+        try {
+          localStorage.setItem(panelStorageKey, String(collapsed))
+        } catch (error) {}
+      }
+
+      let storedPanelState = false
+      try {
+        storedPanelState = localStorage.getItem(panelStorageKey) === 'true'
+      } catch (error) {}
+      setPanelCollapsed(storedPanelState, false)
+
+      const setDrawerOpen = open => {
+        document.body.classList.toggle('toc-drawer-open', open)
+        if ($mobileTocButton) {
+          $mobileTocButton.classList.toggle('close', !open)
+          $mobileTocButton.setAttribute('aria-expanded', String(open))
+        }
+      }
+
+      window.mobileToc = {
+        open: () => setDrawerOpen(true),
+        close: () => setDrawerOpen(false)
+      }
+
+      $panelToggle && $panelToggle.addEventListener('click', () => {
+        if (window.innerWidth < 1280) {
+          window.mobileToc.close()
+          return
+        }
+        setPanelCollapsed(!document.body.classList.contains('toc-panel-collapsed'))
+      })
+      $panelTrigger && $panelTrigger.addEventListener('click', () => setPanelCollapsed(false))
+      $drawerMask && $drawerMask.addEventListener('click', () => window.mobileToc.close())
+
+      const setBranchExpanded = (item, button, child, expanded, animate = true) => {
+        button.setAttribute('aria-expanded', String(expanded))
+        button.setAttribute('aria-label', expanded ? '收起子目录' : '展开子目录')
+
+        if (!animate) {
+          item.classList.toggle('toc-branch-collapsed', !expanded)
+          child.style.maxHeight = expanded ? 'none' : '0px'
+          return
+        }
+
+        if (expanded) {
+          item.classList.remove('toc-branch-collapsed')
+          child.style.maxHeight = `${child.scrollHeight}px`
+          child.addEventListener('transitionend', event => {
+            if (event.propertyName === 'max-height' && !item.classList.contains('toc-branch-collapsed')) child.style.maxHeight = 'none'
+          }, { once: true })
+        } else {
+          child.style.maxHeight = `${child.scrollHeight}px`
+          child.offsetHeight
+          item.classList.add('toc-branch-collapsed')
+          requestAnimationFrame(() => { child.style.maxHeight = '0px' })
+        }
+      }
+
+      $cardToc.querySelectorAll('.toc-item').forEach(item => {
+        const child = Array.from(item.children).find(element => element.classList.contains('toc-child'))
+        const link = Array.from(item.children).find(element => element.classList.contains('toc-link'))
+        if (!child || !link) return
+
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'toc-branch-toggle'
+        button.innerHTML = '<i class="fas fa-caret-right" aria-hidden="true"></i>'
+        link.before(button)
+        setBranchExpanded(item, button, child, true, false)
+        button.addEventListener('click', event => {
+          event.preventDefault()
+          event.stopPropagation()
+          setBranchExpanded(item, button, child, item.classList.contains('toc-branch-collapsed'))
+        })
+      })
 
       scrollPercent = currentTop => {
         const docHeight = $article.clientHeight
         const winHeight = document.documentElement.clientHeight
         const headerHeight = $article.offsetTop
         const contentMath = (docHeight > winHeight) ? (docHeight - winHeight) : (document.documentElement.scrollHeight - winHeight)
-        const scrollPercent = (currentTop - headerHeight) / (contentMath)
+        const scrollPercent = contentMath > 0 ? (currentTop - headerHeight) / contentMath : 0
         const scrollPercentRounded = Math.round(scrollPercent * 100)
         const percentage = (scrollPercentRounded > 100) ? 100 : (scrollPercentRounded <= 0) ? 0 : scrollPercentRounded
         $tocPercentage.textContent = percentage
       }
 
-      window.mobileToc = {
-        open: () => {
-          $cardTocLayout.style.cssText = 'animation: toc-open .3s; opacity: 1; right: 55px'
-        },
-
-        close: () => {
-          $cardTocLayout.style.animation = 'toc-close .2s'
-          setTimeout(() => {
-            $cardTocLayout.style.cssText = "opacity:''; animation: ''; right: ''"
-          }, 100)
-        }
-      }
-
       // toc元素點擊
       $cardToc.addEventListener('click', e => {
+        const $target = e.target.closest('.toc-link')
+        if (!$target || !$cardToc.contains($target)) return
         e.preventDefault()
-        const target = e.target.classList
-        if (target.contains('toc-content')) return
-        const $target = target.contains('toc-link')
-          ? e.target
-          : e.target.parentElement
-        btf.scrollToDest(btf.getEleTop(document.getElementById(decodeURI($target.getAttribute('href')).replace('#', ''))), 300)
-        if (window.innerWidth < 900) {
-          window.mobileToc.close()
-        }
+        const targetIndex = $tocLink.indexOf($target)
+        const targetHeading = list[targetIndex]
+        if (!targetHeading) return
+
+        const targetHash = `#${encodeURIComponent(targetHeading.id)}`
+        if (window.location.hash !== targetHash) window.history.pushState(null, '', targetHash)
+        const targetPosition = Math.max(0, btf.getEleTop(targetHeading) - 88)
+        const compensatedPosition = window.pageYOffset > targetPosition ? targetPosition + 70 : targetPosition
+        btf.scrollToDest(compensatedPosition, 300)
+        if (window.innerWidth < 1280) window.mobileToc.close()
       })
 
       autoScrollToc = item => {
-        const activePosition = item.getBoundingClientRect().top
-        const sidebarScrollTop = $cardToc.scrollTop
-        if (activePosition > (document.documentElement.clientHeight - 100)) {
-          $cardToc.scrollTop = sidebarScrollTop + 150
-        }
-        if (activePosition < 100) {
-          $cardToc.scrollTop = sidebarScrollTop - 150
-        }
+        const itemRect = item.getBoundingClientRect()
+        const contentRect = $cardToc.getBoundingClientRect()
+        if (itemRect.bottom > contentRect.bottom - 12) $cardToc.scrollTop += itemRect.bottom - contentRect.bottom + 24
+        if (itemRect.top < contentRect.top + 12) $cardToc.scrollTop -= contentRect.top - itemRect.top + 24
       }
     }
 
     // find head position & add active class
-    const list = $article.querySelectorAll('h1,h2,h3,h4,h5,h6')
-    let detectItem = ''
+    let detectItem = -2
     const findHeadPosition = function (top) {
-      if (top === 0) {
-        return false
-      }
-
       let currentId = ''
-      let currentIndex = ''
+      let currentIndex = -1
+      const activationLine = top + document.documentElement.clientHeight * 0.28
 
       list.forEach(function (ele, index) {
-        if (top > btf.getEleTop(ele) - 80) {
+        if (activationLine >= btf.getEleTop(ele)) {
           const id = ele.id
           currentId = id ? '#' + encodeURI(id) : ''
           currentIndex = index
         }
       })
+
+      const atPageBottom = Math.ceil(top + document.documentElement.clientHeight) >= document.documentElement.scrollHeight - 2
+      if (atPageBottom && list.length) {
+        currentIndex = list.length - 1
+        currentId = list[currentIndex].id ? '#' + encodeURI(list[currentIndex].id) : ''
+      }
 
       if (detectItem === currentIndex) return
 
@@ -412,23 +532,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (isToc) {
         $cardToc.querySelectorAll('.active').forEach(i => { i.classList.remove('active') })
+        $cardToc.querySelectorAll('.toc-active-path').forEach(i => { i.classList.remove('toc-active-path') })
 
-        if (currentId === '') {
-          return
-        }
+        if (currentId === '' || currentIndex < 0) return
 
         const currentActive = $tocLink[currentIndex]
+        if (!currentActive) return
         currentActive.classList.add('active')
 
         setTimeout(() => {
           autoScrollToc(currentActive)
         }, 0)
 
-        if (isExpand) return
         let parent = currentActive.parentNode
 
         for (; !parent.matches('.toc'); parent = parent.parentNode) {
-          if (parent.matches('li')) parent.classList.add('active')
+          if (parent.matches('li')) parent.classList.add('toc-active-path')
         }
       }
     }
@@ -442,6 +561,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 100)()
     }
     window.addEventListener('scroll', tocScrollFn)
+    window.tocScrollFn()
   }
 
   /**
@@ -504,8 +624,7 @@ document.addEventListener('DOMContentLoaded', function () {
     },
 
     runMobileToc: () => {
-      if (window.getComputedStyle(document.getElementById('card-toc')).getPropertyValue('opacity') === '0') window.mobileToc.open()
-      else window.mobileToc.close()
+      document.body.classList.contains('toc-drawer-open') ? window.mobileToc.close() : window.mobileToc.open()
     }
   }
 
