@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   let blogNameWidth, menusWidth, searchWidth, $nav
   let mobileSidebarOpen = false
+  let menuToggleElement
 
   const adjustMenu = (init) => {
     if (init) {
@@ -31,23 +32,47 @@ document.addEventListener('DOMContentLoaded', function () {
     $nav.classList.add('show')
   }
 
+  const syncMobileSidebarState = expanded => {
+    const $toggleMenu = document.getElementById('toggle-menu')
+    $toggleMenu && $toggleMenu.setAttribute('aria-expanded', String(expanded))
+  }
+
   // sidebar menus
   const sidebarFn = {
     open: () => {
       btf.sidebarPaddingR()
       document.body.style.overflow = 'hidden'
-      btf.animateIn(document.getElementById('menu-mask'), 'to_show 0.5s')
-      document.getElementById('sidebar-menus').classList.add('open')
+      const $menuMask = document.getElementById('menu-mask')
+      const $sidebarMenus = document.getElementById('sidebar-menus')
+      $menuMask && btf.animateIn($menuMask, 'to_show 0.5s')
+      $sidebarMenus && $sidebarMenus.classList.add('open')
       mobileSidebarOpen = true
+      syncMobileSidebarState(true)
     },
     close: () => {
       const $body = document.body
       $body.style.overflow = ''
       $body.style.paddingRight = ''
-      btf.animateOut(document.getElementById('menu-mask'), 'to_hide 0.5s')
-      document.getElementById('sidebar-menus').classList.remove('open')
+      const $menuMask = document.getElementById('menu-mask')
+      const $sidebarMenus = document.getElementById('sidebar-menus')
+      $menuMask && btf.animateOut($menuMask, 'to_hide 0.5s')
+      $sidebarMenus && $sidebarMenus.classList.remove('open')
       mobileSidebarOpen = false
+      syncMobileSidebarState(false)
     }
+  }
+
+  const toggleMobileSidebar = () => {
+    mobileSidebarOpen ? sidebarFn.close() : sidebarFn.open()
+  }
+
+  const bindMobileMenuToggle = () => {
+    const $toggleMenu = document.getElementById('toggle-menu')
+    if ($toggleMenu === menuToggleElement) return
+    menuToggleElement && menuToggleElement.removeEventListener('click', toggleMobileSidebar)
+    menuToggleElement = $toggleMenu
+    syncMobileSidebarState(mobileSidebarOpen)
+    menuToggleElement && menuToggleElement.addEventListener('click', toggleMobileSidebar)
   }
 
   /**
@@ -258,12 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const scrollFn = function () {
     const $rightside = document.getElementById('rightside')
     const innerHeight = window.innerHeight + 56
-
-    // 當滾動條小于 56 的時候
-    if (document.body.scrollHeight <= innerHeight) {
-      $rightside.style.cssText = 'opacity: 1; transform: translateX(-58px)'
-      return
-    }
+    window.scrollCollect && window.removeEventListener('scroll', window.scrollCollect)
 
     // find the scroll direction
     function scrollDirection (currentTop) {
@@ -313,7 +333,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 200)()
     }
 
-    window.addEventListener('scroll', scrollCollect)
+    window.addEventListener('scroll', window.scrollCollect)
+    window.scrollCollect()
   }
 
   /**
@@ -323,8 +344,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const isToc = GLOBAL_CONFIG_SITE.isToc
     const isAnchor = GLOBAL_CONFIG.isAnchor
     const $article = document.getElementById('article-container')
+    window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
 
-    if (!($article && (isToc || isAnchor))) return
+    if (!($article && (isToc || isAnchor))) {
+      window.tocScrollFn = null
+      return
+    }
 
     let $tocLink, $cardToc, scrollPercent, autoScrollToc
     let list = $article.querySelectorAll('h1,h2,h3,h4,h5,h6')
@@ -560,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function () {
         findHeadPosition(currentTop)
       }, 100)()
     }
-    window.addEventListener('scroll', tocScrollFn)
+    window.addEventListener('scroll', window.tocScrollFn)
     window.tocScrollFn()
   }
 
@@ -628,7 +653,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  document.getElementById('rightside').addEventListener('click', function (e) {
+  let rightsideElement
+  const rightsideClickHandler = function (e) {
     const $target = e.target.id ? e.target : e.target.parentNode
     switch ($target.id) {
       case 'go-up':
@@ -652,7 +678,15 @@ document.addEventListener('DOMContentLoaded', function () {
       default:
         break
     }
-  })
+  }
+
+  const bindRightsideControls = () => {
+    const $rightside = document.getElementById('rightside')
+    if ($rightside === rightsideElement) return
+    rightsideElement && rightsideElement.removeEventListener('click', rightsideClickHandler)
+    rightsideElement = $rightside
+    rightsideElement && rightsideElement.addEventListener('click', rightsideClickHandler)
+  }
 
   /**
    * menu
@@ -890,7 +924,8 @@ document.addEventListener('DOMContentLoaded', function () {
     tabsFn.clickFnOfTabs()
     tabsFn.backToTop()
     switchComments()
-    document.getElementById('toggle-menu').addEventListener('click', () => { sidebarFn.open() })
+    bindRightsideControls()
+    bindMobileMenuToggle()
   }
 
   refreshFn()

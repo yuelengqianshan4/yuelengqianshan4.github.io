@@ -793,10 +793,14 @@ function popupMenu() {
       $('#menu-to').show()
       rmf.open = function () {
         if (el.href.indexOf("http://") == -1 && el.href.indexOf("https://") == -1 || el.href.indexOf("yisous.xyz") != -1) {
-          pjax.loadUrl(el.href)
+          if (window.pjax && typeof window.pjax.loadUrl === 'function') {
+            window.pjax.loadUrl(el.href)
+          } else {
+            window.location.href = el.href
+          }
         }
         else {
-          location.href = el.href
+          window.location.href = el.href
         }
       }
       rmf.openWithNewTab = function () {
@@ -2430,108 +2434,21 @@ if ((lunar["IMonthCn"] == "九月" && lunar["IDayCn"] == "初九")) {
 
 //----------------------------------------------------------------
 
-/* 听话鼠标 start */
-var CURSOR;
-
-Math.lerp = (a, b, n) => (1 - n) * a + n * b;
-
-const getStyle2 = (el, attr) => {
-  try {
-    return window.getComputedStyle
-      ? window.getComputedStyle(el)[attr]
-      : el.currentStyle[attr];
-  } catch (e) { }
-  return "";
-};
-
-// 为了屏蔽异步加载导致无法读取颜色值，这里统一用哈希表预处理
-const map = new Map();
-map.set('red', "rgb(241, 71, 71)");
-map.set('orange', "rgb(241, 162, 71)");
-map.set('yellow', "rgb(241, 238, 71)")
-map.set('purple', "rgb(179, 71, 241)");
-map.set('blue', "rgb(102, 204, 255)");
-map.set('gray', "rgb(226, 226, 226)");
-map.set('green', "rgb(57, 197, 187)");
-map.set('whitegray', "rgb(241, 241, 241)");
-map.set('pink', "rgb(237, 112, 155)");
-map.set('black', "rgb(0, 0, 0)");
-map.set('darkblue', "rgb(97, 100, 159)");
-map.set('heoblue', "rgb(66, 90, 239)");
-
-class Cursor {
-  constructor() {
-    this.pos = { curr: null, prev: null };
-    this.pt = [];
-    this.create();
-    this.init();
-    this.render();
-  }
-
-  move(left, top) {
-    this.cursor.style["left"] = `${left}px`;
-    this.cursor.style["top"] = `${top}px`;
-  }
-
-  create() {
-    if (!this.cursor) {
-      this.cursor = document.createElement("div");
-      this.cursor.id = "cursor";
-      this.cursor.classList.add("hidden");
-      document.body.append(this.cursor);
-    }
-    var el = document.getElementsByTagName('*');
-    for (let i = 0; i < el.length; i++)
-      if (getStyle2(el[i], "cursor") == "pointer")
-        this.pt.push(el[i].outerHTML);
-    var colorVal = map.get(localStorage.getItem("themeColor"));
-    document.body.appendChild((this.scr = document.createElement("style")));
-    this.scr.innerHTML = `* {cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' width='8px' height='8px'><circle cx='4' cy='4' r='4' opacity='1.0' fill='` + colorVal + `'/></svg>") 4 4, auto}`;
-  }
-
-  refresh() {
-    this.scr.remove();
-    this.cursor.classList.remove("hover");
-    this.cursor.classList.remove("active");
-    this.pos = { curr: null, prev: null };
-    this.pt = [];
-
-    this.create();
-    this.init();
-    this.render();
-  }
-
-  init() {
-    document.onmouseover = e => this.pt.includes(e.target.outerHTML) && this.cursor.classList.add("hover");
-    document.onmouseout = e => this.pt.includes(e.target.outerHTML) && this.cursor.classList.remove("hover");
-    document.onmousemove = e => { (this.pos.curr == null) && this.move(e.clientX - 8, e.clientY - 8); this.pos.curr = { x: e.clientX - 8, y: e.clientY - 8 }; this.cursor.classList.remove("hidden"); };
-    document.onmouseenter = e => this.cursor.classList.remove("hidden");
-    document.onmouseleave = e => this.cursor.classList.add("hidden");
-    document.onmousedown = e => this.cursor.classList.add("active");
-    document.onmouseup = e => this.cursor.classList.remove("active");
-  }
-
-  render() {
-    if (this.pos.prev) {
-      // 跟踪速度调节
-      this.pos.prev.x = Math.lerp(this.pos.prev.x, this.pos.curr.x, 0.15);
-      this.pos.prev.y = Math.lerp(this.pos.prev.y, this.pos.curr.y, 0.15);
-      this.move(this.pos.prev.x, this.pos.prev.y);
-    } else {
-      this.pos.prev = this.pos.curr;
-    }
-    requestAnimationFrame(() => this.render());
-  }
-}
-
-(() => {
-  CURSOR = new Cursor();
-  // 需要重新获取列表时，使用 CURSOR.refresh()
-})();
-
-/* 听话鼠标 end */
-
-//----------------------------------------------------------------
+const map = new Map([
+  ['red', 'rgb(241, 71, 71)'],
+  ['orange', 'rgb(241, 162, 71)'],
+  ['yellow', 'rgb(241, 238, 71)'],
+  ['purple', 'rgb(179, 71, 241)'],
+  ['blue', 'rgb(102, 204, 255)'],
+  ['gray', 'rgb(226, 226, 226)'],
+  ['green', 'rgb(57, 197, 187)'],
+  ['whitegray', 'rgb(241, 241, 241)'],
+  ['pink', 'rgb(237, 112, 155)'],
+  ['black', 'rgb(0, 0, 0)'],
+  ['blackgray', 'rgb(49, 54, 59)'],
+  ['darkblue', 'rgb(97, 100, 159)'],
+  ['heoblue', 'rgb(66, 90, 239)']
+]);
 
 /* 新年倒计时 start */
 // let newYearTimer = null;
@@ -2641,62 +2558,6 @@ if (typeof GLOBAL_CONFIG !== 'undefined' && GLOBAL_CONFIG.runtime && document.ge
 //----------------------------------------------------------------
 
 
-/* fps检测 start */
-if (window.localStorage.getItem("fpson") == undefined || window.localStorage.getItem("fpson") == "1") {
-  var rAF = function () {
-    return (
-      window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      function (callback) {
-        window.setTimeout(callback, 1000 / 60);
-      }
-    );
-  }();
-  var frame = 0;
-  var allFrameCount = 0;
-  var lastTime = Date.now();
-  var lastFameTime = Date.now();
-  var loop = function () {
-    var now = Date.now();
-    var fs = (now - lastFameTime);
-    var fps = Math.round(1000 / fs);
-
-    lastFameTime = now;
-    // 不置 0，在动画的开头及结尾记录此值的差值算出 FPS
-    allFrameCount++;
-    frame++;
-
-    if (now > 1000 + lastTime) {
-      var fps = Math.round((frame * 1000) / (now - lastTime));
-      if (fps <= 5) {
-        var kd = `<span style="color:#bd0000">卡成ppt🤢</span>`
-      } else if (fps <= 15) {
-        var kd = `<span style="color:red">电竞级帧率😖</span>`
-      } else if (fps <= 25) {
-        var kd = `<span style="color:orange">有点难受😨</span>`
-      } else if (fps < 35) {
-        var kd = `<span style="color:#9338e6">不太流畅🙄</span>`
-      } else if (fps <= 45) {
-        var kd = `<span style="color:#08b7e4">还不错哦😁</span>`
-      } else {
-        var kd = `<span style="color:#39c5bb">十分流畅🤣</span>`
-      }
-      document.getElementById("fps").innerHTML = `FPS:${fps} ${kd}`;
-      frame = 0;
-      lastTime = now;
-    };
-
-    rAF(loop);
-  }
-
-  loop();
-} else {
-  document.getElementById("fps").style = "display:none!important"
-}
-/* fps检测 end */
-
-//----------------------------------------------------------------
-
 /* 美化模块 start */
 
 // 更新版本需要每个用户都恢复一次默认设置
@@ -2730,7 +2591,6 @@ function clearItem() {
   localStorage.removeItem('blogbg');
   localStorage.removeItem('universe');
   localStorage.removeItem('blur');
-  localStorage.removeItem('fpson');
   localStorage.removeItem('transNum');
   localStorage.removeItem('blurRad');
   localStorage.removeItem('font');
@@ -2748,12 +2608,12 @@ if (localStorage.getItem("themeColor") == undefined) {
 }
 setColor(localStorage.getItem("themeColor"));
 function setColor(c) {
-  document.getElementById("themeColor").innerText = `:root{--theme-color:` + map.get(c) + ` !important}`;
-  localStorage.setItem("themeColor", c);
-  // 刷新鼠标颜色
-  CURSOR.refresh();
+  const themeColor = map.get(c) || map.get('green');
+  const colorKey = map.has(c) ? c : 'green';
+  document.getElementById("themeColor").innerText = `:root{--theme-color:` + themeColor + ` !important}`;
+  localStorage.setItem("themeColor", colorKey);
   // 设置一个带有透明度的主题色，用于菜单栏的悬浮颜色
-  var theme_color = map.get(c);
+  var theme_color = themeColor;
   var trans_theme_color = "rgba" + theme_color.substring(3, theme_color.length - 1) + ", 0.7)";
   var high_trans_color = "rgba" + theme_color.substring(3, theme_color.length - 1) + ", 0.5)";
   document.documentElement.style.setProperty("--text-bg-hover", trans_theme_color);
@@ -2802,19 +2662,6 @@ function setSnow() {
   }
 }
 
-
-// 帧率监测开关
-if (localStorage.getItem("fpson") == undefined) {
-  localStorage.setItem("fpson", "1");
-}
-function fpssw() {
-  if (document.getElementById("fpson").checked) {
-    localStorage.setItem("fpson", "1");
-  } else {
-    localStorage.setItem("fpson", "0");
-  }
-  setTimeout(reload, 600);
-}
 
 // 刷新窗口
 function reload() {
@@ -3171,7 +3018,6 @@ function createWinbox() {
 </div>
 
 <div class="content" style="display:flex">
-  <div class="content-text" style="font-weight:bold; padding-left:10px"> 帧率监测 (刷新生效) </div><input type="checkbox" id="fpson" onclick="fpssw()">
   <div class="content-text" style="font-weight:bold; padding-left:10px"> 雪花特效 (白天模式) </div><input type="checkbox" id="snowSet" onclick="setSnow()">
 </div>
 
@@ -3279,11 +3125,6 @@ function createWinbox() {
     universeSet.checked = true;
   } else if (universeSet && localStorage.getItem("universe") == "none") {
     universeSet.checked = false;
-  }
-  if (localStorage.getItem("fpson") == "1") {
-    document.getElementById("fpson").checked = true;
-  } else {
-    document.getElementById("fpson").checked = false;
   }
   if (localStorage.getItem("rs") == "block") {
     document.getElementById("rightSideSet").checked = true;
