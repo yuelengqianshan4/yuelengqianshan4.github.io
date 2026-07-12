@@ -1,36 +1,18 @@
-/* 阅读进度 start */
-document.addEventListener('pjax:complete', function () {
-  window.onscroll = percent;
-});
-document.addEventListener('DOMContentLoaded', function () {
-  window.onscroll = percent;
-});
-// 页面百分比
-function percent() {
+/* Article reading progress */
+function updateReadingProgress() {
+  const progress = document.getElementById('reading-progress')
+  if (!progress) return
 
-  // 先让菜单栏消失
-  try {
-    rmf.showRightMenu(false);
-    $('.rmMask').attr('style', 'display: none');
-  } catch (err) {
-
-  }
-
-  let a = document.documentElement.scrollTop, // 卷去高度
-    b = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight, document.documentElement.offsetHeight, document.body.clientHeight, document.documentElement.clientHeight) - document.documentElement.clientHeight, // 整个网页高度 减去 可视高度
-    result = Math.round(a / b * 100), // 计算百分比
-    btn = document.querySelector("#go-up"); // 获取按钮
-
-  if (result < 95) { // 如果阅读进度小于95% 就显示百分比
-    btn.childNodes[0].style.display = 'none'
-    btn.childNodes[1].style.display = 'block'
-    btn.childNodes[1].innerHTML = result + '<span>%</span>';
-  } else { // 如果大于95%就显示回到顶部图标
-    btn.childNodes[1].style.display = 'none'
-    btn.childNodes[0].style.display = 'block'
-  }
+  const documentHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)
+  const scrollableHeight = documentHeight - document.documentElement.clientHeight
+  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  const ratio = scrollableHeight > 0 ? Math.min(1, Math.max(0, scrollTop / scrollableHeight)) : 0
+  progress.style.transform = `scaleX(${ratio})`
 }
-/* 阅读进度 end */
+
+window.addEventListener('scroll', updateReadingProgress, { passive: true })
+document.addEventListener('DOMContentLoaded', updateReadingProgress)
+document.addEventListener('pjax:complete', updateReadingProgress)
 
 //----------------------------------------------------------------
 
@@ -2760,35 +2742,6 @@ function clearItem() {
 }
 
 
-// 设置字体
-if (localStorage.getItem("font") == undefined) {
-  localStorage.setItem("font", "LXGW");
-}
-setFont(localStorage.getItem("font"));
-function setFont(n) {
-  localStorage.setItem("font", n)
-  if (n == "default") {
-    document.documentElement.style.setProperty('--global-font', '-apple-system');
-    document.body.style.fontFamily = "-apple-system, Consolas_1, BlinkMacSystemFont, 'Segoe UI' , 'Helvetica Neue' , Lato, Roboto, 'PingFang SC' , 'Microsoft JhengHei' , 'Microsoft YaHei' , sans-serif";
-  }
-  else {
-    document.documentElement.style.setProperty('--global-font', n);
-    document.body.style.fontFamily = "var(--global-font),-apple-system, IBM Plex Mono ,monosapce,'微软雅黑', sans-serif";
-  }
-  try { setFontBorder(); } catch (err) { };
-}
-
-// 设置字体选择框边界
-function setFontBorder() {
-  var curFont = localStorage.getItem("font");
-  var swfId = "swf_" + curFont;
-  document.getElementById(swfId).style.border = "2px solid var(--theme-color)";
-  Array.prototype.forEach.call(document.getElementsByClassName("swf"), function (ee) {
-    if (ee.id != swfId) ee.style.border = "2px solid var(--border-color)";
-  });
-}
-
-
 // 设置主题色
 if (localStorage.getItem("themeColor") == undefined) {
   localStorage.setItem("themeColor", "green");
@@ -3223,20 +3176,7 @@ function createWinbox() {
 </div>
 
 
-<h2>二、字体设置</h2>
-<div class="note warning modern"><p>非商免字体未经授权只能个人使用。本站为完全非商业、非盈利性质的网站，平时用于个人学习交流，如有侵权请联系站长删除，谢谢！ —— 致版权方</p>
-</div>
-<p id="swfs">
-<a class="swf" id="swf_ZhuZiAWan" href="javascript:;" rel="noopener external nofollow" style="font-family:'ZhuZiAWan'!important;color:black" onclick="setFont('ZhuZiAWan')">筑紫A丸标准体2.0</a>
-<a class="swf" id="swf_HYTMR" href="javascript:;" rel="noopener external nofollow" style="font-family:'HYTMR'!important;color:black" onclick="setFont('HYTMR')">汉仪唐美人</a>
-<a class="swf" id="swf_LXGW" href="javascript:;" rel="noopener external nofollow" style="font-family:'LXGW'!important;color:black" onclick="setFont('LXGW')">霞鹜文楷</a>
-<a class="swf" id="swf_TTQHB" href="javascript:;" rel="noopener external nofollow" style="font-family:'TTQHB'!important;color:black" onclick="setFont('TTQHB')">甜甜圈海报</a>
-<a class="swf" id="swf_YSHST" href="javascript:;" rel="noopener external nofollow" style="font-family:'YSHST'!important;color:black" onclick="setFont('YSHST')">优设好身体</a>
-<a class="swf" id="swf_MiSans" href="javascript:;" rel="noopener external nofollow" style="font-family:'MiSans'!important;color:black" onclick="setFont('MiSans')">MiSans</a>
-<a class="swf" id="swf_default" href="javascript:;" rel="noopener external nofollow" style="font-family:-apple-system, IBM Plex Mono ,monosapce,'微软雅黑', sans-serif;!important;color:black" onclick="setFont('default')">系统默认</a>
-</p>
-
-<h2>三、主题色设置</h2>
+<h2>二、主题色设置</h2>
 <div class="content" style="display:flex"><input type="radio" id="red" name="colors" value=" "
         onclick="setColor('red')"><input type="radio" id="orange" name="colors" value=" "
         onclick="setColor('orange')"><input type="radio" id="yellow" name="colors" value=" "
@@ -3250,7 +3190,7 @@ function createWinbox() {
         onclick="setColor('black')"><input type="radio" id="blackgray" name="colors" value=" "
         onclick="setColor('blackgray')"></div>
 
-<h2>四、背景设置</h2>
+<h2>三、背景设置</h2>
 <center><button onclick="resetBg()" style="background:var(--theme-color);display:block;width:35%;padding:15px 0;border-radius:30px;color:white;"><i class="fa-solid fa-arrows-rotate"></i>&nbsp;恢复默认背景</button></center>
 
 <h3>1. 二次元</h3>
