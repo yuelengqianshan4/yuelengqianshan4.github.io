@@ -10976,6 +10976,13 @@ body.is-post-page.post-has-toc #toc-drawer-mask {
 }
 
 @media screen and (min-width: 1280px) {
+  body.is-post-page.post-has-toc #post-info {
+    width: min(100%, 820px) !important;
+    max-width: 820px !important;
+    margin-right: auto !important;
+    margin-left: max(24px, calc((100% - 1180px) / 2)) !important;
+  }
+
   body.is-post-page.post-has-toc #content-inner.layout {
     display: block !important;
     width: 100% !important;
