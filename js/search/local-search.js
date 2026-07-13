@@ -1,23 +1,121 @@
 window.addEventListener('load', () => {
   let loadFlag = false
   let dataObj = []
+  let activeSearchTrigger = null
+  let accessibleSearchOpen = false
   const $searchMask = document.getElementById('search-mask')
 
-  const openSearch = () => {
+  const isAccessibleSearchPage = () => {
+    const classList = document.body.classList
+    return classList.contains('is-non-home-content-page') || classList.contains('is-post-page')
+  }
+
+  const syncSearchAccessibility = () => {
+    const $searchDialog = document.querySelector('#local-search .search-dialog')
+    const $searchTitle = document.querySelector('#local-search .search-dialog-title')
+    const $searchInput = document.querySelector('#local-search-input input')
+    const $closeButton = document.querySelector('#local-search .search-close-button')
+    const $closeIcon = document.querySelector('#local-search .search-close-button i')
+    if (!$searchDialog || !$searchTitle || !$searchInput || !$closeButton) return
+
+    if (isAccessibleSearchPage()) {
+      $searchTitle.id = 'local-search-dialog-title'
+      $searchDialog.setAttribute('role', 'dialog')
+      $searchDialog.setAttribute('aria-modal', 'true')
+      $searchDialog.setAttribute('aria-labelledby', 'local-search-dialog-title')
+      $searchDialog.setAttribute('aria-hidden', String(!accessibleSearchOpen))
+      $searchDialog.setAttribute('tabindex', '-1')
+      $searchInput.setAttribute('aria-label', $searchInput.placeholder || $searchTitle.textContent || 'Search')
+      $closeButton.setAttribute('type', 'button')
+      $closeButton.setAttribute('aria-label', 'Close search')
+      if ($closeIcon) $closeIcon.setAttribute('aria-hidden', 'true')
+      return
+    }
+
+    $searchTitle.removeAttribute('id')
+    $searchDialog.removeAttribute('role')
+    $searchDialog.removeAttribute('aria-modal')
+    $searchDialog.removeAttribute('aria-labelledby')
+    $searchDialog.removeAttribute('aria-hidden')
+    $searchDialog.removeAttribute('tabindex')
+    $searchInput.removeAttribute('aria-label')
+    $closeButton.removeAttribute('type')
+    $closeButton.removeAttribute('aria-label')
+    if ($closeIcon) $closeIcon.removeAttribute('aria-hidden')
+  }
+
+  const getFocusableSearchItems = $searchDialog => {
+    const items = [...$searchDialog.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+    return items.filter(item => item.getClientRects().length > 0)
+  }
+
+  const handleAccessibleSearchKeydown = event => {
+    if (!accessibleSearchOpen) return
+
+    const key = event.key || event.code
+    if (key === 'Escape') {
+      event.preventDefault()
+      closeSearch()
+      return
+    }
+
+    if (key !== 'Tab') return
+    const $searchDialog = document.querySelector('#local-search .search-dialog')
+    if (!$searchDialog) return
+
+    const focusableItems = getFocusableSearchItems($searchDialog)
+    if (focusableItems.length === 0) {
+      event.preventDefault()
+      $searchDialog.focus()
+      return
+    }
+
+    const firstItem = focusableItems[0]
+    const lastItem = focusableItems[focusableItems.length - 1]
+    const focusIsOutside = !$searchDialog.contains(document.activeElement)
+    if (event.shiftKey && (document.activeElement === firstItem || focusIsOutside)) {
+      event.preventDefault()
+      lastItem.focus()
+    } else if (!event.shiftKey && (document.activeElement === lastItem || focusIsOutside)) {
+      event.preventDefault()
+      firstItem.focus()
+    }
+  }
+
+  const openSearch = event => {
     const $searchDialog = document.querySelector('#local-search .search-dialog')
     const $searchInput = document.querySelector('#local-search-input input')
     if (!$searchMask || !$searchDialog || !$searchInput) return
+
+    const useAccessibleLifecycle = isAccessibleSearchPage()
+    if (useAccessibleLifecycle) {
+      activeSearchTrigger = event && event.currentTarget ? event.currentTarget : document.activeElement
+      accessibleSearchOpen = true
+      syncSearchAccessibility()
+      document.removeEventListener('keydown', handleAccessibleSearchKeydown)
+      document.addEventListener('keydown', handleAccessibleSearchKeydown)
+    }
 
     const bodyStyle = document.body.style
     bodyStyle.width = '100%'
     bodyStyle.overflow = 'hidden'
     btf.animateIn($searchMask, 'to_show 0.5s')
     btf.animateIn($searchDialog, 'titleScale 0.5s')
-    setTimeout(() => { $searchInput.focus() }, 100)
+    setTimeout(() => {
+      if (!useAccessibleLifecycle) {
+        $searchInput.focus()
+      } else if (accessibleSearchOpen) {
+        const inputIsVisible = $searchInput.getClientRects().length > 0
+        const focusTarget = inputIsVisible ? $searchInput : getFocusableSearchItems($searchDialog)[0] || $searchDialog
+        focusTarget.focus()
+      }
+    }, 100)
     if (!loadFlag) {
       search()
       loadFlag = true
     }
+    if (useAccessibleLifecycle) return
+
     // shortcut: ESC
     document.addEventListener('keydown', function f (event) {
       if (event.code === 'Escape') {
@@ -28,12 +126,23 @@ window.addEventListener('load', () => {
   }
 
   const closeSearch = () => {
+    const focusTarget = accessibleSearchOpen ? activeSearchTrigger : null
+    if (accessibleSearchOpen) {
+      accessibleSearchOpen = false
+      activeSearchTrigger = null
+      document.removeEventListener('keydown', handleAccessibleSearchKeydown)
+      syncSearchAccessibility()
+    }
+
     const bodyStyle = document.body.style
     bodyStyle.width = ''
     bodyStyle.overflow = ''
     const $searchDialog = document.querySelector('#local-search .search-dialog')
     if ($searchDialog) btf.animateOut($searchDialog, 'search_close .5s')
     if ($searchMask) btf.animateOut($searchMask, 'to_hide 0.5s')
+    if (focusTarget && focusTarget.isConnected) {
+      setTimeout(() => { focusTarget.focus() }, 0)
+    }
   }
 
   const searchClickFn = () => {
@@ -92,15 +201,19 @@ window.addEventListener('load', () => {
     if (!$input || !$resultContent || !$loadingStatus) return
 
     $input.addEventListener('input', function () {
-      const keywords = this.value.trim().toLowerCase().split(/[\s]+/)
-      if (keywords[0] !== '') $loadingStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i>'
-
+      const query = this.value.trim().toLowerCase()
       $resultContent.innerHTML = ''
+      $loadingStatus.innerHTML = ''
+      if (!query) return
+
+      const keywords = query.split(/[\s]+/)
+      $loadingStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i>'
       let str = '<div class="search-result-list">'
-      if (keywords.length <= 0) return
       let count = 0
       // perform local searching
       dataObj.then(data => {
+        if (this.value.trim().toLowerCase() !== query) return
+
         data.forEach(data => {
           let isMatch = true
           let dataTitle = data.title ? data.title.trim().toLowerCase() : ''
@@ -181,7 +294,7 @@ window.addEventListener('load', () => {
         }
         str += '</div>'
         $resultContent.innerHTML = str
-        if (keywords[0] !== '') $loadingStatus.innerHTML = ''
+        $loadingStatus.innerHTML = ''
         window.pjax && window.pjax.refresh($resultContent)
       })
     })
@@ -189,10 +302,12 @@ window.addEventListener('load', () => {
 
   searchClickFn()
   searchClickFnOnce()
+  syncSearchAccessibility()
 
   // pjax
   window.addEventListener('pjax:complete', () => {
-    $searchMask && !btf.isHidden($searchMask) && closeSearch()
+    if (accessibleSearchOpen || ($searchMask && !btf.isHidden($searchMask))) closeSearch()
+    syncSearchAccessibility()
     searchClickFn()
   })
 })

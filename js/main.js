@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let blogNameWidth, menusWidth, searchWidth, $nav
   let mobileSidebarOpen = false
   let menuToggleElement
+  let tocInteractionCleanup
 
   const adjustMenu = (init) => {
     if (init) {
@@ -337,6 +338,12 @@ document.addEventListener('DOMContentLoaded', function () {
     window.scrollCollect()
   }
 
+  const clearTocInteractions = () => {
+    if (!tocInteractionCleanup) return
+    tocInteractionCleanup()
+    tocInteractionCleanup = null
+  }
+
   /**
   * toc,anchor
   */
@@ -345,6 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const isAnchor = GLOBAL_CONFIG.isAnchor
     const $article = document.getElementById('article-container')
     window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+    clearTocInteractions()
 
     if (!($article && (isToc || isAnchor))) {
       window.tocScrollFn = null
@@ -372,6 +380,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const panelStorageKey = 'lunarserenity:toc-panel-collapsed'
       const headingSet = new Set(list)
       const usedIds = new Set()
+      const tocInteractionRemovers = []
+      let drawerReturnFocus = null
+
+      const addTocInteractionListener = (target, type, listener) => {
+        if (!target) return
+        target.addEventListener(type, listener)
+        tocInteractionRemovers.push(() => target.removeEventListener(type, listener))
+      }
 
       document.querySelectorAll('[id]').forEach(element => {
         if (!headingSet.has(element) && element.id) usedIds.add(element.id)
@@ -403,18 +419,34 @@ document.addEventListener('DOMContentLoaded', function () {
         link.setAttribute('title', link.textContent.trim())
       })
 
-      const updatePanelControls = collapsed => {
+      const isDrawerViewport = () => window.innerWidth < 1280
+
+      const syncTocAccessibility = () => {
+        const drawerViewport = isDrawerViewport()
+        const drawerOpen = drawerViewport && document.body.classList.contains('toc-drawer-open')
+        const cardExpanded = drawerViewport
+          ? drawerOpen
+          : !document.body.classList.contains('toc-panel-collapsed')
+
+        $cardTocLayout.setAttribute('aria-hidden', String(!cardExpanded))
+        $drawerMask && $drawerMask.setAttribute('aria-hidden', String(!drawerOpen))
+
         if ($panelToggle) {
-          $panelToggle.setAttribute('aria-expanded', String(!collapsed))
-          $panelToggle.setAttribute('aria-label', collapsed ? '展开文章目录' : '收起文章目录')
-          $panelToggle.title = collapsed ? '展开文章目录' : '收起文章目录'
+          $panelToggle.setAttribute('aria-expanded', String(cardExpanded))
+          $panelToggle.setAttribute('aria-label', cardExpanded ? '收起文章目录' : '展开文章目录')
+          $panelToggle.title = cardExpanded ? '收起文章目录' : '展开文章目录'
         }
-        if ($panelTrigger) $panelTrigger.setAttribute('aria-expanded', String(!collapsed))
+        if ($panelTrigger) $panelTrigger.setAttribute('aria-expanded', String(cardExpanded))
+        if ($mobileTocButton) {
+          $mobileTocButton.classList.toggle('close', !drawerOpen)
+          $mobileTocButton.setAttribute('aria-controls', 'card-toc')
+          $mobileTocButton.setAttribute('aria-expanded', String(drawerOpen))
+        }
       }
 
       const setPanelCollapsed = (collapsed, persist = true) => {
         document.body.classList.toggle('toc-panel-collapsed', collapsed)
-        updatePanelControls(collapsed)
+        syncTocAccessibility()
         if (!persist) return
         try {
           localStorage.setItem(panelStorageKey, String(collapsed))
@@ -427,11 +459,26 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (error) {}
       setPanelCollapsed(storedPanelState, false)
 
-      const setDrawerOpen = open => {
-        document.body.classList.toggle('toc-drawer-open', open)
-        if ($mobileTocButton) {
-          $mobileTocButton.classList.toggle('close', !open)
-          $mobileTocButton.setAttribute('aria-expanded', String(open))
+      const setDrawerOpen = (open, restoreFocus = true) => {
+        const wasOpen = document.body.classList.contains('toc-drawer-open')
+        const nextOpen = Boolean(open && isDrawerViewport())
+
+        if (nextOpen && !wasOpen) {
+          const activeElement = document.activeElement
+          drawerReturnFocus = activeElement && activeElement !== document.body && typeof activeElement.focus === 'function'
+            ? activeElement
+            : $mobileTocButton
+        }
+
+        document.body.classList.toggle('toc-drawer-open', nextOpen)
+        syncTocAccessibility()
+
+        if (!nextOpen && wasOpen) {
+          const focusTarget = drawerReturnFocus
+          drawerReturnFocus = null
+          if (restoreFocus && focusTarget && focusTarget.isConnected && typeof focusTarget.focus === 'function') {
+            focusTarget.focus()
+          }
         }
       }
 
@@ -440,15 +487,41 @@ document.addEventListener('DOMContentLoaded', function () {
         close: () => setDrawerOpen(false)
       }
 
-      $panelToggle && $panelToggle.addEventListener('click', () => {
-        if (window.innerWidth < 1280) {
+      const handlePanelToggleClick = () => {
+        if (isDrawerViewport()) {
           window.mobileToc.close()
           return
         }
-        setPanelCollapsed(!document.body.classList.contains('toc-panel-collapsed'))
-      })
-      $panelTrigger && $panelTrigger.addEventListener('click', () => setPanelCollapsed(false))
-      $drawerMask && $drawerMask.addEventListener('click', () => window.mobileToc.close())
+        if (document.body.classList.contains('toc-panel-collapsed')) {
+          setPanelCollapsed(false)
+          return
+        }
+        setPanelCollapsed(true)
+        if ($panelTrigger) $panelTrigger.focus()
+      }
+      const handlePanelTriggerClick = () => {
+        setPanelCollapsed(false)
+        if ($panelToggle) $panelToggle.focus()
+      }
+      const handleDrawerMaskClick = () => window.mobileToc.close()
+      const handleDrawerKeydown = event => {
+        if (event.key !== 'Escape' || !document.body.classList.contains('toc-drawer-open')) return
+        event.preventDefault()
+        window.mobileToc.close()
+      }
+      const handleTocResize = () => {
+        if (!isDrawerViewport() && document.body.classList.contains('toc-drawer-open')) {
+          setDrawerOpen(false, false)
+          return
+        }
+        syncTocAccessibility()
+      }
+
+      addTocInteractionListener($panelToggle, 'click', handlePanelToggleClick)
+      addTocInteractionListener($panelTrigger, 'click', handlePanelTriggerClick)
+      addTocInteractionListener($drawerMask, 'click', handleDrawerMaskClick)
+      addTocInteractionListener(document, 'keydown', handleDrawerKeydown)
+      addTocInteractionListener(window, 'resize', handleTocResize)
 
       const setBranchExpanded = (item, button, child, expanded, animate = true) => {
         button.setAttribute('aria-expanded', String(expanded))
@@ -479,17 +552,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const link = Array.from(item.children).find(element => element.classList.contains('toc-link'))
         if (!child || !link) return
 
-        const button = document.createElement('button')
-        button.type = 'button'
-        button.className = 'toc-branch-toggle'
-        button.innerHTML = '<i class="fas fa-caret-right" aria-hidden="true"></i>'
-        link.before(button)
-        setBranchExpanded(item, button, child, true, false)
-        button.addEventListener('click', event => {
+        let button = Array.from(item.children).find(element => element.classList.contains('toc-branch-toggle'))
+        if (!button) {
+          button = document.createElement('button')
+          button.type = 'button'
+          button.className = 'toc-branch-toggle'
+          button.innerHTML = '<i class="fas fa-caret-right" aria-hidden="true"></i>'
+          link.before(button)
+        }
+        setBranchExpanded(item, button, child, !item.classList.contains('toc-branch-collapsed'), false)
+        const handleBranchToggleClick = event => {
           event.preventDefault()
           event.stopPropagation()
           setBranchExpanded(item, button, child, item.classList.contains('toc-branch-collapsed'))
-        })
+        }
+        addTocInteractionListener(button, 'click', handleBranchToggleClick)
       })
 
       scrollPercent = currentTop => {
@@ -504,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       // toc元素點擊
-      $cardToc.addEventListener('click', e => {
+      const handleTocClick = e => {
         const $target = e.target.closest('.toc-link')
         if (!$target || !$cardToc.contains($target)) return
         e.preventDefault()
@@ -518,7 +595,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const compensatedPosition = window.pageYOffset > targetPosition ? targetPosition + 70 : targetPosition
         btf.scrollToDest(compensatedPosition, 300)
         if (window.innerWidth < 1280) window.mobileToc.close()
-      })
+      }
+      addTocInteractionListener($cardToc, 'click', handleTocClick)
+
+      tocInteractionCleanup = () => {
+        tocInteractionRemovers.forEach(removeListener => { removeListener() })
+        drawerReturnFocus = null
+        document.body.classList.remove('toc-drawer-open', 'toc-panel-collapsed')
+        if ($cardTocLayout.isConnected && isDrawerViewport()) $cardTocLayout.setAttribute('aria-hidden', 'true')
+        if ($drawerMask && $drawerMask.isConnected) $drawerMask.setAttribute('aria-hidden', 'true')
+        if ($mobileTocButton && $mobileTocButton.isConnected) {
+          $mobileTocButton.classList.add('close')
+          $mobileTocButton.setAttribute('aria-expanded', 'false')
+        }
+      }
 
       autoScrollToc = item => {
         const itemRect = item.getBoundingClientRect()
@@ -890,6 +980,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
 
     document.getElementById('menu-mask').addEventListener('click', e => { sidebarFn.close() })
+    document.addEventListener('pjax:send', clearTocInteractions)
 
     clickFnOfSubMenu()
     GLOBAL_CONFIG.islazyload && lazyloadImg()
